@@ -127,7 +127,7 @@ a{color:var(--plum)}
       <p class="lead">Нужна один раз. Админка сохраняет изменения в репозиторий сайта на GitHub, после чего сайт пересобирается автоматически. Ключ доступа будет зашифрован паролем.</p>
       <ol class="steps">
         <li>Откройте <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">создание ключа на GitHub</a>.</li>
-        <li>Срок — 1 год. <b>Repository access</b> → <i>Only select repositories</i> → <code>banki</code>.</li>
+        <li>Срок — 1 год. <b>Repository access</b> → <i>Only select repositories</i> → <code>jam</code>.</li>
         <li><b>Permissions</b> → <i>Contents</i>: <code>Read and write</code>; <i>Actions</i>: <code>Read-only</code> (чтобы видеть статус сборки).</li>
         <li><i>Generate token</i>, скопируйте ключ и вставьте ниже.</li>
       </ol>
@@ -215,7 +215,7 @@ a{color:var(--plum)}
 <script>
 (function () {
 "use strict";
-var OWNER = "Diego001-art", REPO = "banki", BRANCH = "main";
+var OWNER = "Diego001-art", REPO = "jam", BRANCH = "main";
 var API = "https://api.github.com/repos/" + OWNER + "/" + REPO;
 var SITE = new URL("../", location.href).href.replace(/\/$/, "");
 var VAULT = "public/admin/vault.json", ITER = 600000;
@@ -258,7 +258,7 @@ async function gh(path, opt) {
 }
 async function checkToken(tok) {
   var repo = await gh("", { token: tok });
-  if (!repo.permissions || !repo.permissions.push) throw new Error("У ключа нет права записи в репозиторий banki (Contents: Read and write).");
+  if (!repo.permissions || !repo.permissions.push) throw new Error("У ключа нет права записи в репозиторий jam (Contents: Read and write).");
 }
 async function readFile(path) {
   var j = await gh("/contents/" + path.split("/").map(encodeURIComponent).join("/") + "?ref=" + BRANCH);
