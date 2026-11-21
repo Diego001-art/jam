@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow">
+<title>Админка партнёрских ссылок</title>
+<style>
+*{box-sizing:border-box}body{font:14px/1.45 system-ui,sans-serif;margin:0;background:#f5f6f8;color:#1a1d23}
+header{background:#1a1d23;color:#fff;padding:10px 20px;display:flex;gap:16px;align-items:center}header b{margin-right:auto}
+nav button{background:none;border:0;color:#bbb;padding:6px 10px;cursor:pointer;font:inherit}nav button.on{color:#fff;border-bottom:2px solid #fff}
+main{max-width:1100px;margin:20px auto;padding:0 16px}section{display:none}section.on{display:block}
+.card{background:#fff;border-radius:8px;padding:14px 16px;margin-bottom:14px;box-shadow:0 1px 2px #0001}
+table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:6px 8px;border-bottom:1px solid #eee;vertical-align:top}th{font-weight:600;color:#555}
+label{display:block;margin:8px 0 2px;font-weight:600;font-size:12px;color:#555}input,select,textarea{width:100%;padding:7px 8px;border:1px solid #ccd;border-radius:5px;font:inherit}
+textarea{min-height:70px;font-family:ui-monospace,monospace;font-size:12px}.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:0 12px}
+button.b{background:#2f5bea;color:#fff;border:0;border-radius:5px;padding:7px 14px;cursor:pointer;font:inherit;margin-top:10px}button.g{background:#e8eaf0;color:#222}
+.note{color:#666;font-size:12px;margin:4px 0}.err{color:#b00020}.okm{color:#0a7a2f}.tag{padding:1px 7px;border-radius:9px;background:#eef;font-size:12px}
+#login{max-width:340px;margin:80px auto}
+</style></head><body>
+<div id="login" class="card" hidden><h3>Вход</h3><label for="pw">Пароль</label><input id="pw" type="password" autocomplete="current-password"><button class="b" id="go">Войти</button><p class="err" id="le"></p></div>
+<div id="app" hidden>
+<header><b>Партнёрские ссылки</b><nav id="nav"><button data-s="offers" class="on">Офферы</button><button data-s="nets">Сети и программы</button><button data-s="stats">Статистика</button></nav><button class="g b" id="out" style="margin:0">Выйти</button></header>
+<main>
+<p id="msg" class="note"></p>
+<section id="offers" class="on">
+ <div class="card"><table><thead><tr><th>Оффер (id)</th><th>Программа</th><th>Статус</th><th>Вознаграждение</th><th></th></tr></thead><tbody id="ot"></tbody></table><p class="note">Кнопки на сайте ведут на /go/{id}. Id оффера должен совпадать с id в data/offers.json репозитория.</p></div>
+ <div class="card"><h3 id="oh">Оффер</h3><div class="row">
+  <div><label>Id оффера</label><input id="o_id"></div>
+  <div><label>Программа</label><select id="o_program_id"></select></div>
+  <div><label>Статус</label><select id="o_status"><option value="paused">paused — отключён</option><option value="active">active — включён</option><option value="archived">archived</option></select></div></div>
+  <label>Партнёрская ссылка (https; для click-id вставьте {click_id} в параметр, который возвращает сеть)</label><input id="o_tracking_url" placeholder="https://…">
+  <label>Страница продукта на сайте банка (куда вести, если оффер отключён)</label><input id="o_fallback_url" placeholder="https://…">
+  <div class="row"><div><label>Тип вознаграждения</label><select id="o_payout_type"><option value="">—</option><option value="cpa">cpa</option><option value="revshare">revshare</option></select></div>
+  <div><label>Сумма, ₽</label><input id="o_payout_amount" inputmode="decimal"></div></div>
+  <label>Условия выплаты</label><textarea id="o_payout_conditions"></textarea>
+  <button class="b" id="osave">Сохранить оффер</button> <button class="b g" id="onew">Новый</button></div>
+</section>
+<section id="nets">
+ <div class="card"><table><thead><tr><th>Сеть</th><th>Тип</th><th>Postback</th><th></th></tr></thead><tbody id="nt"></tbody></table></div>
+ <div class="card"><h3>Сеть или прямая программа</h3><div class="row"><div><label>Id</label><input id="n_id"></div><div><label>Название</label><input id="n_name"></div>
+  <div><label>Тип</label><select id="n_kind"><option value="cpa">cpa</option><option value="direct">direct</option></select></div>
+  <div><label>Статус</label><select id="n_status"><option value="active">active</option><option value="disabled">disabled</option></select></div></div>
+  <label>Сайт</label><input id="n_website" placeholder="https://…"><label>Заметки</label><input id="n_notes">
+  <label>Postback: маппинг (JSON из официальной документации сети)</label><textarea id="n_postback_map" placeholder='{"click_id":"…","external_id":"…","status":"…","amount":"…","statusMap":{"…":"approved"}}'></textarea>
+  <label><input type="checkbox" id="n_postback_enabled" style="width:auto"> Приём postback включён</label>
+  <button class="b" id="nsave">Сохранить сеть</button> <button class="b g" id="nsec">Новый секрет postback</button><p class="note" id="nsecout"></p></div>
+ <div class="card"><h3>Программа</h3><div class="row"><div><label>Id</label><input id="p_id"></div><div><label>Название</label><input id="p_name"></div><div><label>Сеть</label><select id="p_network_id"></select></div></div><button class="b" id="psave">Сохранить программу</button></div>
+</section>
+<section id="stats">
+ <div class="card"><div class="row"><div><label>С</label><input id="s_from" type="date"></div><div><label>По</label><input id="s_to" type="date"></div></div><button class="b" id="sgo">Показать</button>
+ <p class="note">Данные только из реальных кликов и postback. Показы кнопок и CTR появятся после подключения счётчика просмотров (Яндекс Метрика); пока не считаются.</p></div>
+ <div class="card"><table><thead><tr><th>Оффер</th><th>Клики</th><th>Конверсии</th><th>Ожидает</th><th>Подтв.</th><th>Откл.</th><th>Оплачено</th><th>Конв. из клика</th></tr></thead><tbody id="st"></tbody></table></div>
+ <div class="card"><h3>Источники кликов</h3><table><thead><tr><th>utm_source</th><th>Страница</th><th>Клики</th></tr></thead><tbody id="srct"></tbody></table></div>
+</section>
+</main></div>
+<script>
+(function(){
+var S={networks:[],programs:[],offers:[]};
+var $=function(s){return document.querySelector(s)};
+var esc=function(t){return String(t==null?"":t).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})};
+function msg(t,bad){var m=$("#msg");m.textContent=t||"";m.className=bad?"note err":"note okm"}
+async function api(method,path,body){
+  var r=await fetch("/admin/api"+path,{method:method,headers:{"content-type":"application/json","x-requested-with":"admin"},body:body?JSON.stringify(body):undefined});
+  var j=await r.json().catch(function(){return{}});
+  if(r.status===401){show(false);throw new Error(j.error||"нужен вход")}
+  if(!r.ok)throw new Error(j.error||("ошибка "+r.status));return j}
+function show(on){$("#login").hidden=on;$("#app").hidden=!on}
+async function load(){S=await api("GET","/state");render()}
+function opts(sel,list,empty){$(sel).innerHTML=(empty?'<option value="">—</option>':"")+list.map(function(x){return'<option value="'+esc(x.id)+'">'+esc(x.name)+"</option>"}).join("")}
+function render(){
+  $("#ot").innerHTML=S.offers.map(function(o){var p=S.programs.filter(function(x){return x.id===o.program_id})[0];
+    return"<tr><td>"+esc(o.id)+"</td><td>"+esc(p?p.name:"—")+'</td><td><span class="tag">'+esc(o.status)+"</span></td><td>"+(o.payout_amount!=null?esc(o.payout_amount)+" ₽ ("+esc(o.payout_type||"")+")":"—")+'</td><td><button class="b g" data-o="'+esc(o.id)+'" style="margin:0">Изменить</button></td></tr>'}).join("")||'<tr><td colspan="5" class="note">Офферов нет. Добавьте после подключения сети.</td></tr>';
+  $("#nt").innerHTML=S.networks.map(function(n){return"<tr><td>"+esc(n.name)+" <small>("+esc(n.id)+")</small></td><td>"+esc(n.kind)+"</td><td>"+(n.postback_enabled?"включён":"выключен")+(n.has_secret?", секрет задан":"")+'</td><td><button class="b g" data-n="'+esc(n.id)+'" style="margin:0">Изменить</button></td></tr>'}).join("")||'<tr><td colspan="4" class="note">Сетей нет.</td></tr>';
+  opts("#o_program_id",S.programs,true);opts("#p_network_id",S.networks,false)}
+function fill(pref,obj,keys){keys.forEach(function(k){var e=$("#"+pref+k);if(!e)return;if(e.type==="checkbox")e.checked=!!obj[k];else e.value=obj[k]==null?"":obj[k]})}
+var OK=["id","program_id","status","tracking_url","fallback_url","payout_type","payout_amount","payout_conditions"],NK=["id","name","kind","status","website","notes","postback_map","postback_enabled"];
+function read(pref,keys){var o={};keys.forEach(function(k){var e=$("#"+pref+k);o[k]=e.type==="checkbox"?e.checked:e.value});return o}
+document.addEventListener("click",function(e){var t=e.target;
+  if(t.dataset.o){fill("o_",S.offers.filter(function(x){return x.id===t.dataset.o})[0],OK);$("#oh").textContent="Оффер: "+t.dataset.o}
+  if(t.dataset.n)fill("n_",S.networks.filter(function(x){return x.id===t.dataset.n})[0],NK)});
+$("#onew").onclick=function(){fill("o_",{status:"paused"},OK);$("#oh").textContent="Новый оффер"};
+$("#osave").onclick=function(){api("PUT","/offer",read("o_",OK)).then(load).then(function(){msg("Оффер сохранён. Изменение действует сразу, пересборка сайта не нужна.")}).catch(function(e){msg(e.message,1)})};
+$("#nsave").onclick=function(){api("PUT","/network",read("n_",NK)).then(load).then(function(){msg("Сеть сохранена")}).catch(function(e){msg(e.message,1)})};
+$("#psave").onclick=function(){api("PUT","/program",read("p_",["id","name","network_id"])).then(load).then(function(){msg("Программа сохранена")}).catch(function(e){msg(e.message,1)})};
+$("#nsec").onclick=function(){var id=$("#n_id").value;api("POST","/network-secret",{id:id}).then(function(r){$("#nsecout").textContent="Секрет (показан один раз, сохраните в настройках сети): "+r.secret;return load()}).catch(function(e){msg(e.message,1)})};
+$("#sgo").onclick=function(){var q="?from="+($("#s_from").value||"0000-01-01")+"&to="+($("#s_to").value||"9999-12-31");
+  api("GET","/stats"+q).then(function(r){
+   $("#st").innerHTML=r.offers.map(function(o){return"<tr><td>"+esc(o.offer_id)+"</td><td>"+o.clicks+"</td><td>"+o.conversions+"</td><td>"+o.pending+" / "+o.amount_pending+" ₽</td><td>"+o.approved+" / "+o.amount_approved+" ₽</td><td>"+o.rejected+"</td><td>"+o.paid+" / "+o.amount_paid+" ₽</td><td>"+(o.conversion_rate==null?"—":(o.conversion_rate*100).toFixed(1)+"%")+"</td></tr>"}).join("")||'<tr><td colspan="8" class="note">Данных пока нет.</td></tr>';
+   $("#srct").innerHTML=r.sources.map(function(s){return"<tr><td>"+esc(s.utm_source)+"</td><td>"+esc(s.source_path)+"</td><td>"+s.clicks+"</td></tr>"}).join("")||'<tr><td colspan="3" class="note">Данных пока нет.</td></tr>'}).catch(function(e){msg(e.message,1)})};
+$("#nav").onclick=function(e){var s=e.target.dataset.s;if(!s)return;document.querySelectorAll("#nav button").forEach(function(b){b.classList.toggle("on",b===e.target)});document.querySelectorAll("main section").forEach(function(x){x.classList.toggle("on",x.id===s)});if(s==="stats")$("#sgo").click()};
+$("#go").onclick=function(){api("POST","/login",{password:$("#pw").value}).then(function(){$("#pw").value="";show(true);return load()}).catch(function(e){$("#le").textContent=e.message})};
+$("#out").onclick=function(){api("POST","/logout").then(function(){show(false)})};
+api("GET","/state").then(function(r){S=r;show(true);render()}).catch(function(){show(false)});
+})();
+</script></body></html>

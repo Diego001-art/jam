@@ -12,6 +12,7 @@
     "postbuild": "tsx scripts/build-sitemap.ts --check",
     "test": "vitest run",
     "backend": "tsx backend/src/server.ts",
+    "backend:hash": "tsx backend/src/hash-password.ts",
     "lint": "eslint .",
     "format": "prettier --write ."
   },
