@@ -31,6 +31,7 @@ button.b{background:#2f5bea;color:#fff;border:0;border-radius:5px;padding:7px 14
   <div><label>Сумма, ₽</label><input id="o_payout_amount" inputmode="decimal"></div></div>
   <label>Условия выплаты</label><textarea id="o_payout_conditions"></textarea>
   <button class="b" id="osave">Сохранить оффер</button> <button class="b g" id="onew">Новый</button></div>
+ <div class="card"><h3>Импорт и экспорт офферов (CSV)</h3><p><a class="b g" id="xo" href="#" style="display:inline-block;text-decoration:none;padding:7px 14px">Скачать офферы CSV</a></p><label>Загрузить CSV (колонки: id; program_id; tracking_url; fallback_url; payout_type; payout_amount; payout_conditions; status). Любая ошибка отменяет весь импорт.</label><input id="ifile" type="file" accept=".csv,text/csv"><button class="b" id="oimp">Импортировать</button></div>
 </section>
 <section id="nets">
  <div class="card"><table><thead><tr><th>Сеть</th><th>Тип</th><th>Postback</th><th></th></tr></thead><tbody id="nt"></tbody></table></div>
@@ -45,7 +46,7 @@ button.b{background:#2f5bea;color:#fff;border:0;border-radius:5px;padding:7px 14
 </section>
 <section id="stats">
  <div class="card"><div class="row"><div><label>С</label><input id="s_from" type="date"></div><div><label>По</label><input id="s_to" type="date"></div></div><button class="b" id="sgo">Показать</button>
- <p class="note">Данные только из реальных кликов и postback. Показы кнопок и CTR появятся после подключения счётчика просмотров (Яндекс Метрика); пока не считаются.</p></div>
+ <p><a class="b" id="x1" href="#" style="display:inline-block;text-decoration:none;padding:7px 14px;margin-right:6px">Скачать статистику CSV</a><a class="b g" id="x2" href="#" style="display:inline-block;text-decoration:none;padding:7px 14px;margin-right:6px">Клики CSV</a><a class="b g" id="x3" href="#" style="display:inline-block;text-decoration:none;padding:7px 14px">Конверсии CSV</a></p><p class="note">Данные только из реальных кликов и postback. Показы кнопок и CTR появятся после подключения счётчика просмотров (Яндекс Метрика); пока не считаются.</p></div>
  <div class="card"><table><thead><tr><th>Оффер</th><th>Клики</th><th>Конверсии</th><th>Ожидает</th><th>Подтв.</th><th>Откл.</th><th>Оплачено</th><th>Конв. из клика</th></tr></thead><tbody id="st"></tbody></table></div>
  <div class="card"><h3>Источники кликов</h3><table><thead><tr><th>utm_source</th><th>Страница</th><th>Клики</th></tr></thead><tbody id="srct"></tbody></table></div>
 </section>
@@ -60,7 +61,7 @@ async function api(method,path,body){
   var r=await fetch("/admin/api"+path,{method:method,headers:{"content-type":"application/json","x-requested-with":"admin"},body:body?JSON.stringify(body):undefined});
   var j=await r.json().catch(function(){return{}});
   if(r.status===401){show(false);throw new Error(j.error||"нужен вход")}
-  if(!r.ok)throw new Error(j.error||("ошибка "+r.status));return j}
+  if(!r.ok)throw new Error((j.error||("ошибка "+r.status))+(j.errors?": "+j.errors.join("; "):""));return j}
 function show(on){$("#login").hidden=on;$("#app").hidden=!on}
 async function load(){S=await api("GET","/state");render()}
 function opts(sel,list,empty){$(sel).innerHTML=(empty?'<option value="">—</option>':"")+list.map(function(x){return'<option value="'+esc(x.id)+'">'+esc(x.name)+"</option>"}).join("")}
@@ -84,6 +85,9 @@ $("#sgo").onclick=function(){var q="?from="+($("#s_from").value||"0000-01-01")+"
   api("GET","/stats"+q).then(function(r){
    $("#st").innerHTML=r.offers.map(function(o){return"<tr><td>"+esc(o.offer_id)+"</td><td>"+o.clicks+"</td><td>"+o.conversions+"</td><td>"+o.pending+" / "+o.amount_pending+" ₽</td><td>"+o.approved+" / "+o.amount_approved+" ₽</td><td>"+o.rejected+"</td><td>"+o.paid+" / "+o.amount_paid+" ₽</td><td>"+(o.conversion_rate==null?"—":(o.conversion_rate*100).toFixed(1)+"%")+"</td></tr>"}).join("")||'<tr><td colspan="8" class="note">Данных пока нет.</td></tr>';
    $("#srct").innerHTML=r.sources.map(function(s){return"<tr><td>"+esc(s.utm_source)+"</td><td>"+esc(s.source_path)+"</td><td>"+s.clicks+"</td></tr>"}).join("")||'<tr><td colspan="3" class="note">Данных пока нет.</td></tr>'}).catch(function(e){msg(e.message,1)})};
+function csvLink(id,name,withDates){var a=$(id);a.addEventListener("click",function(e){var q=withDates?"?from="+($("#s_from").value||"0000-01-01")+"&to="+($("#s_to").value||"9999-12-31"):"";a.href="/admin/api/export/"+name+q})}
+csvLink("#x1","stats.csv",1);csvLink("#x2","clicks.csv",1);csvLink("#x3","conversions.csv",1);csvLink("#xo","offers.csv",0);
+$("#oimp").onclick=function(){var f=$("#ifile").files[0];if(!f){msg("Выберите файл",1);return}var r=new FileReader();r.onload=function(){api("POST","/import/offers",{csv:r.result}).then(load).then(function(){msg("Импорт выполнен")}).catch(function(e){msg(e.message,1)})};r.readAsText(f,"utf-8")};
 $("#nav").onclick=function(e){var s=e.target.dataset.s;if(!s)return;document.querySelectorAll("#nav button").forEach(function(b){b.classList.toggle("on",b===e.target)});document.querySelectorAll("main section").forEach(function(x){x.classList.toggle("on",x.id===s)});if(s==="stats")$("#sgo").click()};
 $("#go").onclick=function(){api("POST","/login",{password:$("#pw").value}).then(function(){$("#pw").value="";show(true);return load()}).catch(function(e){$("#le").textContent=e.message})};
 $("#out").onclick=function(){api("POST","/logout").then(function(){show(false)})};

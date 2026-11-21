@@ -48,7 +48,11 @@ export function createServer(db = openDb(DB_FILE), sessions = new Sessions()) {
         }
         if (path === "/logout" && req.method === "POST") { sessions.logout(cookieOf(req)); return json(res, 200, { ok: true }, { "set-cookie": "sid=; HttpOnly; SameSite=Strict; Path=/admin; Max-Age=0" }); }
         if (!sessions.valid(cookieOf(req))) return json(res, 401, { error: "нужен вход" });
-        try { const r = adminApi(db, req.method ?? "GET", path, body, url.searchParams); json(res, r.status, r.json); }
+        try {
+          const r = adminApi(db, req.method ?? "GET", path, body, url.searchParams);
+          if (r.csv) { res.writeHead(200, { "content-type": "text/csv; charset=utf-8", "content-disposition": `attachment; filename="${r.csv.name}"`, "cache-control": "no-store", "x-robots-tag": "noindex" }); res.end(r.csv.text); }
+          else json(res, r.status, r.json);
+        }
         catch (e) { console.error(e); json(res, 500, { error: "внутренняя ошибка" }); }
       });
       return;

@@ -59,3 +59,22 @@ describe("админ-API", () => {
     expect(offerStats(openDb(":memory:"), "0000-01-01", "9999-12-31")).toEqual([]);
   });
 });
+
+describe("CSV офферов", () => {
+  it("экспорт и импорт; ошибка отменяет всё", () => {
+    const db = openDb(":memory:");
+    const ok = adminApi(db, "POST", "/import/offers", { csv: "id;status;tracking_url;fallback_url\no1;active;https://a.example/?s={click_id};https://b.example/\no2;paused;;" }, q);
+    expect(ok.status).toBe(200);
+    const exp = adminApi(db, "GET", "/export/offers.csv", {}, q);
+    expect(exp.csv?.text).toContain("o1;;https://a.example/?s={click_id}");
+    const bad = adminApi(db, "POST", "/import/offers", { csv: "id;status;tracking_url\no3;paused;\no4;active;http://insecure.example" }, q);
+    expect(bad.status).toBe(400);
+    expect((db.prepare("SELECT COUNT(*) AS n FROM offers").get() as { n: number }).n).toBe(2);
+  });
+  it("экспорт кликов и статистики", () => {
+    const db = openDb(":memory:");
+    db.exec("INSERT INTO clicks (click_id, offer_id) VALUES ('c1','o1')");
+    expect(adminApi(db, "GET", "/export/clicks.csv", {}, q).csv?.text).toContain("c1;o1");
+    expect(adminApi(db, "GET", "/export/stats.csv", {}, q).csv?.text).toContain("o1;1;0");
+  });
+});

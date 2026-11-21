@@ -4,8 +4,9 @@ import type { Db } from "./db";
 import { isHttps } from "./go";
 import { parseMap } from "./postback";
 import { offerStats, sourceStats } from "./stats";
+import { parseCsv, toCsv } from "../../src/lib/csv";
 
-export type ApiResult = { status: number; json: unknown };
+export type ApiResult = { status: number; json: unknown; csv?: { name: string; text: string } };
 const ok = (json: unknown = { ok: true }): ApiResult => ({ status: 200, json });
 const bad = (error: string, status = 400): ApiResult => ({ status, json: { error } });
 const ID = /^[a-z0-9-]{1,80}$/;
@@ -14,6 +15,7 @@ const str = (v: unknown, max = 500) => (typeof v === "string" && v.trim() ? v.tr
 const num = (v: unknown) => (v == null || v === "" ? null : Number.isFinite(Number(v)) && Number(v) >= 0 ? Number(v) : NaN);
 
 type Body = Record<string, unknown>;
+const OFFER_COLS = ["id", "program_id", "tracking_url", "fallback_url", "payout_type", "payout_amount", "payout_conditions", "status"];
 
 export function adminApi(db: Db, method: string, path: string, body: Body, q: URLSearchParams): ApiResult {
   if (method === "GET" && path === "/state") {
@@ -27,6 +29,38 @@ export function adminApi(db: Db, method: string, path: string, body: Body, q: UR
     const from = q.get("from") ?? "0000-01-01", to = q.get("to") ?? "9999-12-31";
     if (!DATE.test(from) || !DATE.test(to)) return bad("даты в формате ГГГГ-ММ-ДД");
     return ok({ offers: offerStats(db, from, to), sources: sourceStats(db, from, to) });
+  }
+  if (method === "GET" && path.startsWith("/export/")) {
+    const kind = path.slice("/export/".length), from = q.get("from") ?? "0000-01-01", to = q.get("to") ?? "9999-12-31";
+    if (!DATE.test(from) || !DATE.test(to)) return bad("даты в формате ГГГГ-ММ-ДД");
+    const csv = (name: string, header: string[], rows: Record<string, unknown>[]): ApiResult =>
+      ({ status: 200, json: null, csv: { name, text: toCsv(header, rows.map((r) => header.map((h) => r[h]))) } });
+    if (kind === "stats.csv") {
+      const h = ["offer_id", "clicks", "conversions", "pending", "approved", "rejected", "paid", "amount_pending", "amount_approved", "amount_paid", "conversion_rate"];
+      return csv("stats.csv", h, offerStats(db, from, to) as unknown as Record<string, unknown>[]);
+    }
+    if (kind === "clicks.csv") return csv("clicks.csv", ["click_id", "offer_id", "ts", "source_path", "utm_source", "utm_medium", "utm_campaign"],
+      db.prepare("SELECT * FROM clicks WHERE date(ts) BETWEEN ? AND ? ORDER BY ts").all(from, to) as Record<string, unknown>[]);
+    if (kind === "conversions.csv") return csv("conversions.csv", ["id", "click_id", "offer_id", "network_id", "external_id", "status", "amount", "ts"],
+      db.prepare("SELECT * FROM conversions WHERE date(ts) BETWEEN ? AND ? ORDER BY ts").all(from, to) as Record<string, unknown>[]);
+    if (kind === "offers.csv") return csv("offers.csv", OFFER_COLS, db.prepare("SELECT * FROM offers ORDER BY id").all() as Record<string, unknown>[]);
+    return bad("не найдено", 404);
+  }
+  if (method === "POST" && path === "/import/offers") {
+    // Строки проверяются теми же правилами, что и форма оффера. Любая ошибка — импорт отменяется целиком.
+    const { header, rows } = parseCsv(String(body.csv ?? ""));
+    if (!header.includes("id") || !header.includes("status")) return bad("нужны колонки id и status");
+    const errors: string[] = [];
+    db.exec("BEGIN");
+    try {
+      rows.forEach((r, i) => {
+        const res = adminApi(db, "PUT", "/offer", { ...r }, q);
+        if (res.status !== 200) errors.push(`строка ${i + 2} (${r.id}): ${(res.json as { error: string }).error}`);
+      });
+      if (errors.length) { db.exec("ROLLBACK"); return { status: 400, json: { error: "импорт отменён", errors } }; }
+      db.exec("COMMIT");
+    } catch (e) { db.exec("ROLLBACK"); throw e; }
+    return ok({ imported: rows.length });
   }
   if (method === "PUT" && path === "/network") {
     const id = str(body.id, 80), name = str(body.name, 200), kind = body.kind;

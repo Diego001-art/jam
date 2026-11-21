@@ -6,6 +6,8 @@
   "scripts": {
     "dev": "next dev",
     "validate": "tsx scripts/validate-content.ts",
+    "products:export": "tsx scripts/products-csv.ts export",
+    "products:import": "tsx scripts/products-csv.ts import",
     "vendor": "node scripts/copy-vendor.mjs",
     "prebuild": "npm run vendor && npm run validate",
     "build": "next build",
