@@ -14,7 +14,11 @@ CREATE TABLE IF NOT EXISTS networks (
   kind TEXT NOT NULL CHECK (kind IN ('direct','cpa')),
   website TEXT,
   status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active','disabled')),
-  notes TEXT
+  notes TEXT,
+  -- Приём postback: выключен, пока владелец не внесёт данные из официальной документации сети
+  postback_enabled INTEGER NOT NULL DEFAULT 0,
+  postback_secret TEXT,
+  postback_map TEXT             -- JSON, см. backend/src/postback.ts
 );
 CREATE TABLE IF NOT EXISTS programs (
   id TEXT PRIMARY KEY,
