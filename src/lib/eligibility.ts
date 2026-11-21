@@ -42,6 +42,7 @@ export function offerBlockers(o: Offer, product: Product | undefined, lender: Le
   else r.push(...productBlockers(product, lender, now).filter((b) => b !== "партнёрская ссылка без раскрытия"));
   if (!o.disclosure) r.push("нет раскрытия партнёрского характера ссылки");
   if (!o.advertiser) r.push("не указан рекламодатель для маркировки");
+  if (!o.erid) r.push("нет токена маркировки рекламы (ERID)");
   if (!o.approvedBy) r.push("нет подтверждения редактора");
   return r;
 }

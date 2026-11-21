@@ -75,6 +75,7 @@ describe("партнёрские офферы", () => {
     expect(b).toContain("продукт не найден");
     expect(b).toContain("нет раскрытия партнёрского характера ссылки");
     expect(b).toContain("не указан рекламодатель для маркировки");
+    expect(b).toContain("нет токена маркировки рекламы (ERID)");
   });
   it("черновик оффера не публикуется", () => {
     expect(offerBlockers({ ...offer, status: "draft" }, undefined, undefined)).toContain("статус оффера не «published»");

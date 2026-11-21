@@ -41,6 +41,11 @@
       ? '<span class="oc-thumb logo" aria-hidden="true"><img src="' + esc(/^(https?:|data:)/.test(l.logo) ? l.logo : base + "/" + l.logo) + '" alt=""></span>'
       : '<span class="oc-thumb" style="--c1:' + esc(l.c1) + ";--c2:" + esc(l.c2) + '" aria-hidden="true"><b>' + esc(l.name) + "</b><i></i></span>";
   }
+  /** Маркировка рекламы: «Реклама», рекламодатель, ERID. */
+  function adLabel(o) {
+    var a = o.ad || {};
+    return '<span class="hl">Реклама' + (a.advertiser ? ". " + esc(a.advertiser) : "") + (a.erid ? ". erid: " + esc(a.erid) : "") + "</span>";
+  }
   function tabs(cat, cityId, type, bankId, today) {
     return cat.types.map(function (t) {
       var n = offersOf(cat, cityId, t.id, bankId, today).length, on = t.id === type;
@@ -58,7 +63,7 @@
         : '<div class="oc-note">Условия — на сайте банка</div>';
       var paid = o.goUrl || o.affiliateUrl, href = o.goUrl || o.affiliateUrl || o.url || l.url;
       go = '<a class="pill pill-ink oc-go" href="' + esc(href) + '"' + (o.goUrl ? ' data-go="1"' : "") + ' target="_blank" rel="noopener' + (paid ? " sponsored nofollow" : "") + '">Перейти на сайт банка</a>';
-      if (paid) tags.push('<span class="hl">Партнёрская ссылка</span>');
+      if (paid) tags.push(adLabel(o));
       if (o.checkedAt) tags.push("<span>Проверено " + dateRu(o.checkedAt) + "</span>");
       if (o.sourceUrl) tags.push('<a class="tag-link" href="' + esc(o.sourceUrl) + '" target="_blank" rel="noopener nofollow">Источник ↗</a>');
       o.tags.forEach(function (x) { tags.push("<span>" + esc(x) + "</span>"); });
@@ -137,7 +142,7 @@
     }).join("");
     var go = "<tr><th></th>" + items.map(function (o) {
       var l = find(cat.lenders, o.lenderId), paid = o.goUrl || o.affiliateUrl, href = o.goUrl || o.affiliateUrl || o.url || l.url;
-      return '<td><a class="pill pill-ink oc-go" href="' + esc(href) + '"' + (o.goUrl ? ' data-go="1"' : "") + ' target="_blank" rel="noopener' + (paid ? " sponsored nofollow" : "") + '">Перейти на сайт банка</a>' + (paid ? '<p class="cmp-ad">Партнёрская ссылка</p>' : "") + "</td>";
+      return '<td><a class="pill pill-ink oc-go" href="' + esc(href) + '"' + (o.goUrl ? ' data-go="1"' : "") + ' target="_blank" rel="noopener' + (paid ? " sponsored nofollow" : "") + '">Перейти на сайт банка</a>' + (paid ? '<p class="cmp-ad">' + adLabel(o).replace(/<\/?span[^>]*>/g, "") + "</p>" : "") + "</td>";
     }).join("") + "</tr>";
     return '<div class="cmp-scroll"><table class="cmp"><thead>' + head + "</thead><tbody>" + body + go + "</tbody></table></div>" +
       '<p class="src">Строки с различиями выделены. Условия — по первичным источникам на дату проверки; итоговые условия определяет банк.</p>';

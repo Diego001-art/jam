@@ -3,7 +3,7 @@
   "siteUrl": "https://diego001-art.github.io/jam",
   "mode": "preview",
   "indexing": false,
-  "geoLookup": true,
+  "geoLookup": false,
   "goBaseUrl": null,
   "operator": {
     "type": null,

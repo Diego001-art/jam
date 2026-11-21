@@ -58,11 +58,20 @@ export function offersInCity(c: City, type?: string) {
 }
 
 /** Адрес /go/{id}: только для продуктов с опубликованным партнёрским оффером, прошедшим шлюз, и если задан бэкенд. */
-function goUrl(p: Product): string | null {
+function liveOffer(p: Product) {
   if (!site.goBaseUrl) return null;
   const o = partnerOffers.find((x) => x.productId === p.id && x.status === "published");
-  if (!o || offerBlockers(o, p, lenderOf(p.lenderId)).length) return null;
-  return site.goBaseUrl.replace(/\/$/, "") + "/go/" + o.id + "/";
+  return o && offerBlockers(o, p, lenderOf(p.lenderId)).length === 0 ? o : null;
+}
+/** ERID передаётся и в кликовой ссылке (маркировка рекламы, ст. 18.1 закона о рекламе). */
+function goUrl(p: Product): string | null {
+  const o = liveOffer(p);
+  if (!o) return null;
+  return site.goBaseUrl!.replace(/\/$/, "") + "/go/" + o.id + "/?erid=" + encodeURIComponent(o.erid!);
+}
+function adMark(p: Product) {
+  const o = liveOffer(p);
+  return o ? { advertiser: o.advertiser, erid: o.erid } : null;
 }
 
 /** Компактный каталог для браузера: только то, что прошло публикационный шлюз. */
@@ -79,9 +88,11 @@ export function catalog() {
       .map((c) => ({ id: c.id, slug: c.slug, name: c.name, nameIn: c.nameIn, regionId: c.regionId, banner: c.banner, thumb: c.thumb, geo: c.geoMatch })),
     lenders: visibleLenders.map((l) => ({ id: l.id, slug: l.slug, name: l.name, url: l.officialUrl, domain: l.domain, c1: l.colors.c1, c2: l.colors.c2, logo: l.logo })),
     offers: publishedProducts.map((p) => ({
-      id: p.id, lenderId: p.lenderId, type: p.productType, name: p.productName, url: p.url, affiliateUrl: p.affiliateUrl,
+      id: p.id, lenderId: p.lenderId, type: p.productType, name: p.productName, url: p.url,
+      // Старое поле affiliateUrl на сайт не выводится: без рекламодателя и ERID ссылку нельзя показать законно.
+      affiliateUrl: null,
       metrics: metrics(p, typeById(p.productType)).map((m) => [m.label, m.value, m.sub ?? null]),
-      goUrl: goUrl(p), pros: p.pros, cons: p.cons, image: p.image, eligibility: p.eligibility,
+      goUrl: goUrl(p), ad: adMark(p), pros: p.pros, cons: p.cons, image: p.image, eligibility: p.eligibility,
       tags: p.tags, checkedAt: p.checkedAt, validUntil: p.validUntil, sourceUrl: p.sourceUrl, disclosure: p.disclosure,
       regionIds: p.regionIds, hidden: p.hidden, sort: p.sortOrder,
     })),

@@ -678,6 +678,7 @@ function offerBlockers(o) {
   else r = r.concat(productBlockers(p).filter(function (b) { return b !== "партнёрская ссылка без раскрытия"; }));
   if (!o.disclosure) r.push("нет раскрытия партнёрского характера ссылки");
   if (!o.advertiser) r.push("не указан рекламодатель для маркировки");
+  if (!o.erid) r.push("нет токена маркировки рекламы (ERID)");
   if (!o.approvedBy) r.push("не указано, кто подтвердил");
   return r;
 }
@@ -695,7 +696,7 @@ function renderOffersTab() {
     fld("Продукт", sel("productId", o.productId, D.products.map(function (p) { return [p.id, productLabel(p.id)]; }))) +
     '<div class="row2">' + fld("Статус", sel("status", o.status, OSTATUS)) + fld("Кто подтвердил", inp("approvedBy", o.approvedBy)) + "</div>" +
     fld("Рекламодатель (для маркировки)", inp("advertiser", o.advertiser), "Наименование и ИНН рекламодателя из договора или кабинета сети") +
-    fld("ERID", inp("erid", o.erid), "Токен маркировки, если он нужен и получен через ОРД. Не придумывать") +
+    fld("ERID", inp("erid", o.erid), "Обязателен для публикации. Получается через ОРД (сеть, банк или вы — уточнить в договоре). Не придумывать") +
     fld("Раскрытие партнёрского характера ссылки", '<textarea data-k="disclosure" rows="2">' + esc(o.disclosure || "") + "</textarea>") +
     '<div style="margin-top:14px"><button type="button" class="pill danger" id="oDel">Удалить оффер</button></div></div>';
   function gate() { $("#oGate").innerHTML = gateBox(offerBlockers(o)); }

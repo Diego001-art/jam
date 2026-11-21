@@ -14,6 +14,9 @@ describe("данные проекта", () => {
   it("в каталог для браузера не попадают непроверенные условия", () => {
     expect(catalog().offers.every((o) => o.sourceUrl && o.checkedAt && o.validUntil)).toBe(true);
   });
+  it("старые партнёрские ссылки без маркировки на сайт не попадают", () => {
+    expect(catalog().offers.every((o) => o.affiliateUrl === null)).toBe(true);
+  });
   it("пока индексация выключена, sitemap пустой", () => {
     expect(sitemapPaths()).toEqual([]);
   });
