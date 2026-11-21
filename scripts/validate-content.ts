@@ -52,6 +52,7 @@ products.forEach((p) => {
   p.hidden.districts.forEach((d) => { if (!districtIds.has(d)) err(`продукт ${p.id}: скрыт в неизвестном округе ${d}`); });
   p.hidden.regions.forEach((r) => { if (!regionIds.has(r)) err(`продукт ${p.id}: скрыт в неизвестном регионе ${r}`); });
   p.hidden.cities.forEach((c) => { if (!cityIds.has(c)) err(`продукт ${p.id}: скрыт в неизвестном городе ${c}`); });
+  if (p.image && !fs.existsSync(pub(p.image))) err(`продукт ${p.id}: нет файла изображения ${p.image}`);
   if (p.amountMin != null && p.amountMax != null && p.amountMin > p.amountMax) err(`продукт ${p.id}: сумма от > до`);
   if (p.termMin != null && p.termMax != null && p.termMin > p.termMax) err(`продукт ${p.id}: срок от > до`);
   if (p.rateMin != null && p.rateMax != null && p.rateMin > p.rateMax) err(`продукт ${p.id}: ставка от > до`);

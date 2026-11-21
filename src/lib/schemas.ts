@@ -7,7 +7,7 @@ const nullableStr = z.string().min(1).nullable();
 
 export const StatusSchema = z.enum(["draft", "review", "published", "archived"]);
 export const CityIndexStatusSchema = z.enum(["draft", "review", "published", "noindex", "archived"]);
-export const ProductTypeIdSchema = z.enum(["cash", "card", "mortgage", "auto", "refi", "debit", "pledge"]);
+export const ProductTypeIdSchema = z.enum(["cash", "card", "mortgage", "auto", "refi", "debit", "pledge", "deposit"]);
 
 export const SourceSchema = z.object({
   url,
@@ -23,6 +23,8 @@ export const SiteSchema = z.object({
   indexing: z.boolean(),
   /** Определение города по IP через сторонний сервис. */
   geoLookup: z.boolean(),
+  /** Адрес бэкенда /go/ (например https://go.example.ru). Пока null — кнопки ведут на официальные сайты. */
+  goBaseUrl: url.nullable().default(null),
   operator: z.object({
     type: z.enum(["ООО", "ИП", "АО", "ПАО", "самозанятый"]).nullable(),
     name: nullableStr,
@@ -137,6 +139,11 @@ export const ProductSchema = z.object({
   /** Процент на остаток, % годовых */
   depositRate: num,
   fee: nullableStr,
+  /** Преимущества и недостатки — только подтверждённые источником факты. */
+  pros: z.array(z.string().min(1)).default([]),
+  cons: z.array(z.string().min(1)).default([]),
+  /** Изображение продукта: файл в public/ (только при наличии права использования). */
+  image: nullableStr.default(null),
   eligibility: z.array(z.string().min(1)),
   conditions: nullableStr,
   tags: z.array(z.string().min(1)),

@@ -4,6 +4,7 @@
   "mode": "preview",
   "indexing": false,
   "geoLookup": true,
+  "goBaseUrl": null,
   "operator": {
     "type": null,
     "name": null,

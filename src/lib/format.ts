@@ -45,6 +45,8 @@ export function metrics(p: Product, t: ProductType): Metric[] {
       ];
     case "mortgage":
       return [rate, { label: "Первый взнос", value: p.downPaymentMin != null ? "от " + pct(p.downPaymentMin) : null }, term];
+    case "deposit":
+      return [{ label: "Ставка", value: rangePct(p.rateMin, p.rateMax) }, { label: "Сумма", value: range(p.amountMin, p.amountMax, rub) }, term];
     case "debit":
       return [
         { label: "Кешбэк", value: p.cashback != null ? "до " + pct(p.cashback) : null },

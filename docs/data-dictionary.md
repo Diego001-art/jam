@@ -8,7 +8,7 @@
 | id | строка | уникальный id, латиница |
 | lenderId | строка | id кредитора из `lenders.json` |
 | productName | строка | название продукта у банка |
-| productType | cash · card · mortgage · auto · refi · debit · pledge | вид |
+| productType | cash · card · mortgage · auto · refi · debit · pledge · deposit | вид (для `deposit` ПСК не требуется; ставка — доходность вклада) |
 | url | URL или null | официальная страница продукта |
 | affiliateUrl | URL или null | партнёрская ссылка; требует `disclosure` |
 | amountMin/Max | ₽ | сумма (для карт — кредитный лимит) |
@@ -21,6 +21,8 @@
 | fee | текст | обслуживание/комиссии |
 | eligibility | список | требования к заёмщику |
 | conditions | текст | прочие условия |
+| pros, cons | списки | преимущества и недостатки; только факты из источника |
+| image | путь в `public/` или null | изображение продукта; только при наличии права использования, файл должен существовать |
 | regionIds | список | где доступен: `["*"]` — вся Россия |
 | hidden.districts/regions/cities | списки id | где не показывать |
 | sourceUrl, checkedAt, validUntil | URL, даты | источник, дата проверки, до какой даты актуально |
@@ -52,4 +54,4 @@ id (служебный), slug (в адресе), name, nameIn (предложн�
 districts[] (федеральные округа) и regions[] (id, slug, name, districtId).
 
 ## data/site.json
-siteName, siteUrl, mode (preview · production), indexing, geoLookup, operator{type: ООО · ИП · АО · ПАО · самозанятый, …}, commercial{model, affiliateLinks, disclosure}, conditionsCheckedAt, calculator{source, sourceUrl, rates}.
+siteName, siteUrl, mode (preview · production), indexing, geoLookup, goBaseUrl (адрес бэкенда `/go/`; null — кнопки ведут на официальные сайты банков), operator{type: ООО · ИП · АО · ПАО · самозанятый, …}, commercial{model, affiliateLinks, disclosure}, conditionsCheckedAt, calculator{source, sourceUrl, rates}.

@@ -8,14 +8,14 @@ import {
   AuthorsSchema, CitySchema, GuideSchema, LenderSchema, OfferSchema, ProductSchema, ProductTypeSchema, RegionsSchema, SiteSchema, TextsSchema,
   type City, type Guide, type Lender, type Offer, type Product, type ProductType, type Region, type Site,
 } from "./schemas";
-import { availableIn, isLenderVisible, isProductPublishable, today } from "./eligibility";
+import { availableIn, isLenderVisible, isProductPublishable, offerBlockers, today } from "./eligibility";
 import { metrics } from "./format";
 import { BASE_PATH } from "./paths";
 import { z } from "zod";
 
 const ROOT = process.cwd();
 const read = (p: string) => JSON.parse(fs.readFileSync(path.join(ROOT, p), "utf8"));
-function load<T>(file: string, schema: z.ZodType<T>): T {
+function load<T>(file: string, schema: z.ZodType<T, z.ZodTypeDef, unknown>): T {
   const r = schema.safeParse(read(file));
   if (!r.success) throw new Error(file + ": " + r.error.issues.map((i) => i.path.join(".") + " — " + i.message).join("; "));
   return r.data;
@@ -57,6 +57,14 @@ export function offersInCity(c: City, type?: string) {
   return publishedProducts.filter((p) => (!type || p.productType === type) && availableIn(p, c.id, r.id, d));
 }
 
+/** Адрес /go/{id}: только для продуктов с опубликованным партнёрским оффером, прошедшим шлюз, и если задан бэкенд. */
+function goUrl(p: Product): string | null {
+  if (!site.goBaseUrl) return null;
+  const o = partnerOffers.find((x) => x.productId === p.id && x.status === "published");
+  if (!o || offerBlockers(o, p, lenderOf(p.lenderId)).length) return null;
+  return site.goBaseUrl.replace(/\/$/, "") + "/go/" + o.id + "/";
+}
+
 /** Компактный каталог для браузера: только то, что прошло публикационный шлюз. */
 export function catalog() {
   return {
@@ -73,6 +81,7 @@ export function catalog() {
     offers: publishedProducts.map((p) => ({
       id: p.id, lenderId: p.lenderId, type: p.productType, name: p.productName, url: p.url, affiliateUrl: p.affiliateUrl,
       metrics: metrics(p, typeById(p.productType)).map((m) => [m.label, m.value, m.sub ?? null]),
+      goUrl: goUrl(p), pros: p.pros, cons: p.cons, image: p.image, eligibility: p.eligibility,
       tags: p.tags, checkedAt: p.checkedAt, validUntil: p.validUntil, sourceUrl: p.sourceUrl, disclosure: p.disclosure,
       regionIds: p.regionIds, hidden: p.hidden, sort: p.sortOrder,
     })),

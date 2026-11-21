@@ -350,7 +350,7 @@ function productBlockers(p) {
   if (!p.validUntil) r.push("нет срока актуальности"); else if (p.validUntil < today()) r.push("истёк срок актуальности");
   if (!p.approvedBy) r.push("не указано, кто подтвердил");
   if (!hasConditions(p)) r.push("нет ни одного условия");
-  if ((p.rateMin != null || p.rateMax != null) && p.pskMin == null && p.pskMax == null) r.push("ставка без ПСК");
+  if (p.productType !== "deposit" && (p.rateMin != null || p.rateMax != null) && p.pskMin == null && p.pskMax == null) r.push("ставка без ПСК");
   if (p.affiliateUrl && !p.disclosure) r.push("партнёрская ссылка без раскрытия");
   return r;
 }
@@ -560,7 +560,7 @@ function renderBank() {
   });
   $$("[data-addp]", box).forEach(function (btn) { btn.addEventListener("click", function () {
     var t = btn.dataset.addp, id = l.id + "-" + t + "-" + stamp().slice(-5);
-    D.products.push({ id: id, lenderId: l.id, productName: typeName(t), productType: t, url: null, affiliateUrl: null, amountMin: null, amountMax: null, termMin: null, termMax: null, rateMin: null, rateMax: null, pskMin: null, pskMax: null, gracePeriodDays: null, downPaymentMin: null, cashback: null, depositRate: null, fee: null, eligibility: [], conditions: null, tags: [], regionIds: ["*"], hidden: { districts: [], regions: [], cities: [] }, sourceUrl: null, checkedAt: null, validUntil: null, status: "draft", disclosure: null, approvedBy: null, sortOrder: 0 });
+    D.products.push({ id: id, lenderId: l.id, productName: typeName(t), productType: t, url: null, affiliateUrl: null, amountMin: null, amountMax: null, termMin: null, termMax: null, rateMin: null, rateMax: null, pskMin: null, pskMax: null, gracePeriodDays: null, downPaymentMin: null, cashback: null, depositRate: null, fee: null, pros: [], cons: [], image: null, eligibility: [], conditions: null, tags: [], regionIds: ["*"], hidden: { districts: [], regions: [], cities: [] }, sourceUrl: null, checkedAt: null, validUntil: null, status: "draft", disclosure: null, approvedBy: null, sortOrder: 0 });
     CUR_P = id; refresh(); renderBanks();
   }); });
 }
@@ -611,21 +611,24 @@ function availEditor(p) {
 function renderProduct() {
   var p = D.products.filter(function (x) { return x.id === CUR_P; })[0], box = $("#bankEdit"), l = lenderById(CUR_B);
   if (!p) { CUR_P = null; return renderBank(); }
-  var t = p.productType, credit = ["cash", "auto", "refi", "pledge", "mortgage"].indexOf(t) > -1;
+  var t = p.productType, credit = ["cash", "auto", "refi", "pledge", "mortgage"].indexOf(t) > -1, dep = t === "deposit";
   var N = function (k, label, hint) { return fld(label, inp(k, p[k], "text", ' data-num inputmode="decimal"'), hint); };
   box.innerHTML = '<div class="box"><button type="button" class="pill sm" id="back">← ' + esc(l.name) + '</button><h3 style="margin-top:12px">' + esc(p.productName) + '</h3><div id="pGate"></div>' +
     '<div class="row2">' + fld("Название продукта", inp("productName", p.productName)) + fld("Вид", sel("productType", t, D.types.map(function (x) { return [x.id, x.one]; }))) + "</div>" +
     '<div class="row2">' + fld("Страница продукта на сайте банка", inp("url", p.url, "url")) + fld("Партнёрская ссылка", inp("affiliateUrl", p.affiliateUrl, "url"), "Если указана — нужен текст раскрытия ниже") + "</div>" +
     "<h3>Условия</h3>" +
-    (credit || t === "card" ? '<div class="row2">' + N("amountMin", t === "card" ? "Лимит от, ₽" : "Сумма от, ₽") + N("amountMax", t === "card" ? "Лимит до, ₽" : "Сумма до, ₽") + "</div>" : "") +
-    (credit ? '<div class="row2">' + N("termMin", "Срок от, мес.") + N("termMax", "Срок до, мес.") + "</div>" : "") +
+    (credit || dep || t === "card" ? '<div class="row2">' + N("amountMin", t === "card" ? "Лимит от, ₽" : "Сумма от, ₽") + N("amountMax", t === "card" ? "Лимит до, ₽" : "Сумма до, ₽") + "</div>" : "") +
+    (credit || dep ? '<div class="row2">' + N("termMin", "Срок от, мес.") + N("termMax", "Срок до, мес.") + "</div>" : "") +
     (t !== "debit" ? '<div class="row2">' + N("rateMin", "Ставка от, % годовых") + N("rateMax", "Ставка до, % годовых") + "</div>" +
-      '<div class="row2">' + N("pskMin", "ПСК от, % годовых") + N("pskMax", "ПСК до, % годовых", "Обязательна, если указана ставка") + "</div>" : "") +
+      (dep ? "" : '<div class="row2">' + N("pskMin", "ПСК от, % годовых") + N("pskMax", "ПСК до, % годовых", "Обязательна, если указана ставка") + "</div>") : "") +
     (t === "card" ? '<div class="row2">' + N("gracePeriodDays", "Льготный период, дней") + fld("Обслуживание", inp("fee", p.fee)) + "</div>" : "") +
     (t === "mortgage" ? N("downPaymentMin", "Первый взнос от, %") : "") +
     (t === "debit" ? '<div class="row3">' + N("cashback", "Кешбэк до, %") + N("depositRate", "Процент на остаток до, %") + fld("Обслуживание", inp("fee", p.fee)) + "</div>" : "") +
     (t !== "card" && t !== "debit" ? fld("Комиссии", inp("fee", p.fee)) : "") +
     fld("Требования к заёмщику (по строке)", '<textarea data-k="eligibility" data-list rows="3">' + esc(p.eligibility.join("\n")) + "</textarea>") +
+    fld("Преимущества (по строке; только подтверждённое источником)", '<textarea data-k="pros" data-list rows="3">' + esc((p.pros || []).join("\n")) + "</textarea>") +
+    fld("Недостатки (по строке; только подтверждённое источником)", '<textarea data-k="cons" data-list rows="3">' + esc((p.cons || []).join("\n")) + "</textarea>") +
+    fld("Изображение продукта (путь в public/, например img/products/card.webp)", inp("image", p.image), "Только если есть право использовать изображение. Файл добавляется в репозиторий вручную") +
     fld("Прочие условия", '<textarea data-k="conditions" rows="2">' + esc(p.conditions || "") + "</textarea>") +
     fld("Метки в карточке (по строке)", '<textarea data-k="tags" data-list rows="2">' + esc(p.tags.join("\n")) + "</textarea>", "Без «лучший», «гарантированно», «одобрим» и подобного") +
     "<h3>Проверка</h3>" +

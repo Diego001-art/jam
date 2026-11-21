@@ -231,6 +231,51 @@
       window.addEventListener("resize", function () { if (window.innerWidth > 1080 && mnav.classList.contains("open")) menu(false); });
     }
 
+    /* ── Переход по партнёрской ссылке: добавляем страницу-источник и utm ── */
+    function goLink(e) {
+      var a = e.target.closest && e.target.closest("a[data-go]");
+      if (!a) return;
+      try {
+        var u = new URL(a.getAttribute("href"), location.href);
+        u.searchParams.set("from", location.pathname.replace(BASE, "") || "/");
+        new URLSearchParams(location.search).forEach(function (v, k) { if (/^utm_(source|medium|campaign)$/.test(k)) u.searchParams.set(k, v); });
+        a.href = u.href;
+      } catch (err) {}
+    }
+    document.addEventListener("click", goLink);
+    document.addEventListener("auxclick", goLink);
+
+    /* ── Сравнение: выбор хранится только в памяти страницы, состав — в адресе после # ── */
+    var SEL = [], MAX = 4;
+    if (CAT) CAT.sel = SEL;
+    var cmpBar = null;
+    function updateBar() {
+      if (!SEL.length) { if (cmpBar) cmpBar.hidden = true; return; }
+      if (!cmpBar) {
+        cmpBar = document.createElement("div"); cmpBar.className = "cmp-bar"; cmpBar.setAttribute("role", "region"); cmpBar.setAttribute("aria-label", "Сравнение");
+        document.body.appendChild(cmpBar);
+      }
+      cmpBar.hidden = false;
+      cmpBar.innerHTML = "<span>Выбрано: " + SEL.length + " из " + MAX + '</span><a class="pill pill-ink" href="' + BASE + "/sravnenie/#" + SEL.join(",") + '"' + (SEL.length < 2 ? ' aria-disabled="true"' : "") + ">Сравнить</a>" +
+        '<button type="button" class="pill pill-line" id="cmpClear">Очистить</button>';
+      $("#cmpClear").addEventListener("click", function () { SEL.length = 0; $$("input[data-cmp]").forEach(function (i) { i.checked = false; }); updateBar(); });
+    }
+    document.addEventListener("change", function (e) {
+      var i = e.target; if (!i.matches || !i.matches("input[data-cmp]")) return;
+      var id = i.getAttribute("data-cmp"), at = SEL.indexOf(id);
+      if (i.checked && at < 0) { if (SEL.length >= MAX) { i.checked = false; return; } SEL.push(id); }
+      if (!i.checked && at > -1) SEL.splice(at, 1);
+      updateBar();
+    });
+    document.addEventListener("click", function (e) {
+      var a = e.target.closest && e.target.closest(".cmp-bar a"); if (a && SEL.length < 2) e.preventDefault();
+    });
+    var cmp = $("#cmp");
+    if (cmp && CAT) {
+      var drawCmp = function () { cmp.innerHTML = R.compare(CAT, decodeURIComponent(location.hash.slice(1)).split(",").filter(Boolean).slice(0, MAX)); };
+      drawCmp(); window.addEventListener("hashchange", drawCmp);
+    }
+
     /* ── Анимации ── */
     if (window.gsap && window.ScrollTrigger && !reduce) {
       gsap.registerPlugin(ScrollTrigger);

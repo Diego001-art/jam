@@ -25,7 +25,7 @@ export function productBlockers(p: Product, lender: Lender | undefined, now = to
   else if (p.validUntil < now) r.push("истёк срок актуальности");
   if (!p.approvedBy) r.push("нет подтверждения редактора");
   if (!hasConditions(p)) r.push("нет ни одного условия");
-  if ((p.rateMin != null || p.rateMax != null) && p.pskMin == null && p.pskMax == null)
+  if (p.productType !== "deposit" && (p.rateMin != null || p.rateMax != null) && p.pskMin == null && p.pskMax == null)
     r.push("указана ставка без диапазона ПСК (ст. 28 закона о рекламе)");
   if (p.affiliateUrl && !p.disclosure) r.push("партнёрская ссылка без раскрытия");
   return r;
