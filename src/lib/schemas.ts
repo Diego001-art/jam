@@ -24,7 +24,7 @@ export const SiteSchema = z.object({
   /** Определение города по IP через сторонний сервис. */
   geoLookup: z.boolean(),
   operator: z.object({
-    type: z.enum(["ООО", "ИП", "АО", "ПАО"]).nullable(),
+    type: z.enum(["ООО", "ИП", "АО", "ПАО", "самозанятый"]).nullable(),
     name: nullableStr,
     inn: z.string().regex(/^\d{10}(\d{2})?$/, "ИНН — 10 или 12 цифр").nullable(),
     ogrn: z.string().regex(/^\d{13}(\d{2})?$/, "ОГРН/ОГРНИП — 13 или 15 цифр").nullable(),
@@ -157,6 +157,24 @@ export const ProductSchema = z.object({
   sortOrder: z.number().int(),
 });
 
+/**
+ * Публичная часть партнёрского оффера. Репозиторий публичный, поэтому здесь НЕТ
+ * партнёрских ссылок, сетей, сумм вознаграждения и условий выплат — они хранятся
+ * в базе бэкенда (docs/decisions/0004-backend.md). Кнопка на сайте ведёт на /go/{id}.
+ */
+export const OfferSchema = z.object({
+  id: z.string().regex(/^[a-z0-9-]+$/),
+  productId: z.string().min(1),
+  status: z.enum(["draft", "published", "archived"]),
+  /** Рекламодатель для маркировки рекламы (наименование и ИНН/сведения). */
+  advertiser: nullableStr,
+  /** Токен маркировки (ERID), если он требуется и получен через ОРД. */
+  erid: nullableStr,
+  /** Текст раскрытия партнёрского характера ссылки. */
+  disclosure: nullableStr,
+  approvedBy: nullableStr,
+});
+
 export const GuideBlockSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("p"), text: z.string().min(1) }),
   z.object({ type: z.literal("h2"), text: z.string().min(1) }),
@@ -192,5 +210,6 @@ export type District = Regions["districts"][number];
 export type City = z.infer<typeof CitySchema>;
 export type Lender = z.infer<typeof LenderSchema>;
 export type Product = z.infer<typeof ProductSchema>;
+export type Offer = z.infer<typeof OfferSchema>;
 export type Guide = z.infer<typeof GuideSchema>;
 export type Source = z.infer<typeof SourceSchema>;

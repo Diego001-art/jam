@@ -63,3 +63,23 @@ describe("шлюз городской страницы", () => {
     expect(cityBlockers({ ...city, localFacts: [{ text: "Факт", source: { url: "https://x.example/", title: "Источник", checkedAt: "2026-11-01" } }] }, 0)).toContain("нет опубликованных предложений, доступных в городе");
   });
 });
+
+import { offerBlockers } from "@/lib/eligibility";
+import { OfferSchema } from "@/lib/schemas";
+import { partnerOffers } from "@/lib/content";
+
+describe("партнёрские офферы", () => {
+  const offer = OfferSchema.parse({ id: "o1", productId: "p1", status: "published", advertiser: null, erid: null, disclosure: null, approvedBy: null });
+  it("оффер без продукта и раскрытия не проходит шлюз", () => {
+    const b = offerBlockers(offer, undefined, undefined);
+    expect(b).toContain("продукт не найден");
+    expect(b).toContain("нет раскрытия партнёрского характера ссылки");
+    expect(b).toContain("не указан рекламодатель для маркировки");
+  });
+  it("черновик оффера не публикуется", () => {
+    expect(offerBlockers({ ...offer, status: "draft" }, undefined, undefined)).toContain("статус оффера не «published»");
+  });
+  it("в публичном репозитории нет ссылок и сумм вознаграждения", () => {
+    partnerOffers.forEach((o) => expect(Object.keys(o).sort()).toEqual(["advertiser", "approvedBy", "disclosure", "erid", "id", "productId", "status"]));
+  });
+});

@@ -4,8 +4,8 @@
  */
 import fs from "node:fs";
 import path from "node:path";
-import { cities, guides, lenders, products, regions, districts, site, texts, types, offersInCity } from "../src/lib/content";
-import { cityBlockers, guideBlockers, lenderBlockers, productBlockers, today } from "../src/lib/eligibility";
+import { cities, guides, lenders, products, partnerOffers, regions, districts, site, texts, types, offersInCity } from "../src/lib/content";
+import { cityBlockers, guideBlockers, lenderBlockers, offerBlockers, productBlockers, today } from "../src/lib/eligibility";
 
 const errors: string[] = [];
 const warns: string[] = [];
@@ -22,6 +22,7 @@ unique("города.slug внутри региона", cities.map((c) => c.regi
 unique("кредиторы.id", lenders.map((l) => l.id));
 unique("кредиторы.slug", lenders.map((l) => l.slug));
 unique("продукты.id", products.map((p) => p.id));
+unique("офферы.id", partnerOffers.map((o) => o.id));
 unique("гид.slug", guides.map((g) => g.slug));
 unique("виды.slug", types.map((t) => t.slug));
 
@@ -60,6 +61,19 @@ products.forEach((p) => {
     if (b.length) err(`продукт ${p.id} опубликован, но: ${b.join("; ")}`);
   }
 });
+const publishedPerProduct = new Map<string, number>();
+partnerOffers.forEach((o) => {
+  const p = products.find((x) => x.id === o.productId);
+  if (!p) err(`оффер ${o.id}: нет продукта ${o.productId}`);
+  if (o.status === "published") {
+    publishedPerProduct.set(o.productId, (publishedPerProduct.get(o.productId) ?? 0) + 1);
+    const b = offerBlockers(o, p, lenders.find((l) => l.id === p?.lenderId), now);
+    if (b.length) err(`оффер ${o.id} опубликован, но: ${b.join("; ")}`);
+  }
+});
+publishedPerProduct.forEach((n, id) => { if (n > 1) err(`продукт ${id}: опубликовано офферов ${n}, допустим один`); });
+products.forEach((p) => { if (p.affiliateUrl) warns.push(`продукт ${p.id}: поле affiliateUrl устарело — ссылки хранятся в бэкенде, репозиторий публичный`); });
+
 lenders.forEach((l) => {
   if (l.status === "published") { const b = lenderBlockers(l); if (b.length) err(`кредитор ${l.id} опубликован, но: ${b.join("; ")}`); }
 });

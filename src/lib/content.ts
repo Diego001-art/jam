@@ -5,8 +5,8 @@ import fs from "node:fs";
 import path from "node:path";
 import vm from "node:vm";
 import {
-  AuthorsSchema, CitySchema, GuideSchema, LenderSchema, ProductSchema, ProductTypeSchema, RegionsSchema, SiteSchema, TextsSchema,
-  type City, type Guide, type Lender, type Product, type ProductType, type Region, type Site,
+  AuthorsSchema, CitySchema, GuideSchema, LenderSchema, OfferSchema, ProductSchema, ProductTypeSchema, RegionsSchema, SiteSchema, TextsSchema,
+  type City, type Guide, type Lender, type Offer, type Product, type ProductType, type Region, type Site,
 } from "./schemas";
 import { availableIn, isLenderVisible, isProductPublishable, today } from "./eligibility";
 import { metrics } from "./format";
@@ -29,6 +29,7 @@ export const regions: Region[] = reg.regions;
 export const cities: City[] = load("data/cities.json", z.array(CitySchema));
 export const lenders: Lender[] = load("data/lenders.json", z.array(LenderSchema));
 export const products: Product[] = load("data/products.json", z.array(ProductSchema));
+export const partnerOffers: Offer[] = load("data/offers.json", z.array(OfferSchema));
 export const texts: Record<string, string> = load("content/texts.json", TextsSchema);
 export const authors = load("content/authors.json", AuthorsSchema);
 export const guides: Guide[] = fs

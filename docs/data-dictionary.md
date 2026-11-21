@@ -28,6 +28,20 @@
 | approvedBy | строка | кто подтвердил |
 | disclosure | текст | раскрытие для партнёрской ссылки |
 
+## data/offers.json (публичная часть партнёрского оффера)
+Репозиторий публичный, поэтому здесь нет ссылок, сетей, сумм вознаграждения и условий выплат — они в базе бэкенда (`docs/decisions/0004-backend.md`).
+| Поле | Смысл |
+|---|---|
+| id | id оффера; кнопка на сайте ведёт на `/go/{id}` |
+| productId | продукт из `products.json` |
+| status | draft · published · archived |
+| advertiser | рекламодатель для маркировки |
+| erid | токен маркировки, если требуется |
+| disclosure | текст раскрытия партнёрского характера |
+| approvedBy | кто подтвердил |
+
+Поле `affiliateUrl` у продукта устарело: оставлено для совместимости, валидатор предупреждает, если оно заполнено.
+
 ## data/lenders.json
 id, slug, name, legalName, cbrLicense, officialUrl, domain, colors, logo, partnership (none · affiliate · contract), status, checkedAt, approvedBy, sources[], notes.
 
@@ -38,4 +52,4 @@ id (служебный), slug (в адресе), name, nameIn (предложн�
 districts[] (федеральные округа) и regions[] (id, slug, name, districtId).
 
 ## data/site.json
-siteName, siteUrl, mode (preview · production), indexing, geoLookup, operator{…}, commercial{model, affiliateLinks, disclosure}, conditionsCheckedAt, calculator{source, sourceUrl, rates}.
+siteName, siteUrl, mode (preview · production), indexing, geoLookup, operator{type: ООО · ИП · АО · ПАО · самозанятый, …}, commercial{model, affiliateLinks, disclosure}, conditionsCheckedAt, calculator{source, sourceUrl, rates}.

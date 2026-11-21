@@ -3,7 +3,7 @@
  * Ничего не показывается как действующее условие без источника, даты проверки,
  * срока актуальности и подтверждения редактора.
  */
-import type { City, Guide, Lender, Product, Site } from "./schemas";
+import type { City, Guide, Lender, Offer, Product, Site } from "./schemas";
 
 export const today = (d = new Date()) => d.toISOString().slice(0, 10);
 
@@ -33,6 +33,18 @@ export function productBlockers(p: Product, lender: Lender | undefined, now = to
 
 export const isProductPublishable = (p: Product, l: Lender | undefined, now = today()) =>
   productBlockers(p, l, now).length === 0;
+
+/** Причины, по которым кнопку оффера (/go/{id}) нельзя показывать. Пустой массив — можно. */
+export function offerBlockers(o: Offer, product: Product | undefined, lender: Lender | undefined, now = today()): string[] {
+  const r: string[] = [];
+  if (o.status !== "published") r.push("статус оффера не «published»");
+  if (!product) r.push("продукт не найден");
+  else r.push(...productBlockers(product, lender, now).filter((b) => b !== "партнёрская ссылка без раскрытия"));
+  if (!o.disclosure) r.push("нет раскрытия партнёрского характера ссылки");
+  if (!o.advertiser) r.push("не указан рекламодатель для маркировки");
+  if (!o.approvedBy) r.push("нет подтверждения редактора");
+  return r;
+}
 
 /** Кредитор виден на сайте: в production — только опубликованные, в preview — кроме архивных. */
 export function isLenderVisible(l: Lender, site: Pick<Site, "mode">): boolean {
