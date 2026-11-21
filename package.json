@@ -11,6 +11,7 @@
     "build": "next build",
     "postbuild": "tsx scripts/build-sitemap.ts --check",
     "test": "vitest run",
+    "backend": "tsx backend/src/server.ts",
     "lint": "eslint .",
     "format": "prettier --write ."
   },
