@@ -23,7 +23,7 @@ jobs:
       - run: npm test
       - run: npm run build
         env:
-          NEXT_PUBLIC_BASE_PATH: /banki
+          NEXT_PUBLIC_BASE_PATH: /jam
       - uses: actions/upload-pages-artifact@v3
         with:
           path: out
