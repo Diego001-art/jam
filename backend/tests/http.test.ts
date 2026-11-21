@@ -34,7 +34,7 @@ describe("HTTP админки", () => {
   it("после входа API работает, страница админки закрыта от индексации", async () => {
     const s = await fetch(base + "/admin/api/state", { headers: { cookie } });
     expect(s.status).toBe(200);
-    expect(await s.json()).toEqual({ networks: [], programs: [], offers: [] });
+    expect(await s.json()).toEqual({ networks: [], programs: [], offers: [], failedChecks: [] });
     const p = await fetch(base + "/admin/");
     expect(p.headers.get("x-robots-tag")).toMatch(/noindex/);
   });

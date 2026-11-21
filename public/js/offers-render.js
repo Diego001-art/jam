@@ -83,7 +83,7 @@
       }
       extra += '<label class="oc-cmp"><input type="checkbox" data-cmp="' + esc(o.id) + '"' + (sel ? " checked" : "") + "> Сравнить</label>";
     }
-    return '<article class="oc"' + (hidden ? " hidden" : "") + '><div class="oc-main">' + thumb(l, base) +
+    return '<article class="oc"' + (o ? ' data-offer="' + esc(o.id) + '"' : "") + (hidden ? " hidden" : "") + '><div class="oc-main">' + thumb(l, base) +
       '<div class="oc-id"><h3>' + esc(o ? o.name : l.name) + "</h3><p>" + esc(o ? l.name : t.one) + "</p></div>" + mets + go +
       '</div><div class="oc-tags">' + tags.join("") + "</div>" + (extra ? '<div class="oc-act">' + extra + "</div>" : "") + "</article>";
   }

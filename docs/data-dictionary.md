@@ -54,4 +54,7 @@ id (служебный), slug (в адресе), name, nameIn (предложн�
 districts[] (федеральные округа) и regions[] (id, slug, name, districtId).
 
 ## data/site.json
-siteName, siteUrl, mode (preview · production), indexing, geoLookup, goBaseUrl (адрес бэкенда `/go/`; null — кнопки ведут на официальные сайты банков), operator{type: ООО · ИП · АО · ПАО · самозанятый, …}, commercial{model, affiliateLinks, disclosure}, conditionsCheckedAt, calculator{source, sourceUrl, rates}.
+siteName, siteUrl, mode (preview · production), indexing, geoLookup, goBaseUrl (адрес бэкенда `/go/`; null — кнопки ведут на официальные сайты банков), metrikaId (номер счётчика Яндекс Метрики; загружается только после согласия посетителя), operator{type: ООО · ИП · АО · ПАО · самозанятый, …}, commercial{model, affiliateLinks, disclosure}, conditionsCheckedAt, calculator{source, sourceUrl, rates}.
+
+## content/faq.json
+Вопросы и ответы: `q`, `a`, `types` (виды продуктов или `"*"`). Только о работе сервиса и общих понятиях, без условий конкретных банков и обещаний. Выводятся на страницах видов продуктов и на `/voprosy/` с разметкой FAQPage.

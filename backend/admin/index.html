@@ -20,6 +20,7 @@ button.b{background:#2f5bea;color:#fff;border:0;border-radius:5px;padding:7px 14
 <main>
 <p id="msg" class="note"></p>
 <section id="offers" class="on">
+ <div class="card" id="warn" hidden><b class="err">Проблемы со ссылками (последняя проверка)</b><ul id="warnl"></ul></div>
  <div class="card"><table><thead><tr><th>Оффер (id)</th><th>Программа</th><th>Статус</th><th>Вознаграждение</th><th></th></tr></thead><tbody id="ot"></tbody></table><p class="note">Кнопки на сайте ведут на /go/{id}. Id оффера должен совпадать с id в data/offers.json репозитория.</p></div>
  <div class="card"><h3 id="oh">Оффер</h3><div class="row">
   <div><label>Id оффера</label><input id="o_id"></div>
@@ -66,6 +67,7 @@ function show(on){$("#login").hidden=on;$("#app").hidden=!on}
 async function load(){S=await api("GET","/state");render()}
 function opts(sel,list,empty){$(sel).innerHTML=(empty?'<option value="">—</option>':"")+list.map(function(x){return'<option value="'+esc(x.id)+'">'+esc(x.name)+"</option>"}).join("")}
 function render(){
+  var fc=S.failedChecks||[];$("#warn").hidden=!fc.length;$("#warnl").innerHTML=fc.map(function(c){return"<li>"+esc(c.offer_id)+": "+(c.target==="fallback"?"страница банка":"партнёрская ссылка")+" — "+esc(c.http_status||c.note)+" ("+esc(c.ts)+")</li>"}).join("");
   $("#ot").innerHTML=S.offers.map(function(o){var p=S.programs.filter(function(x){return x.id===o.program_id})[0];
     return"<tr><td>"+esc(o.id)+"</td><td>"+esc(p?p.name:"—")+'</td><td><span class="tag">'+esc(o.status)+"</span></td><td>"+(o.payout_amount!=null?esc(o.payout_amount)+" ₽ ("+esc(o.payout_type||"")+")":"—")+'</td><td><button class="b g" data-o="'+esc(o.id)+'" style="margin:0">Изменить</button></td></tr>'}).join("")||'<tr><td colspan="5" class="note">Офферов нет. Добавьте после подключения сети.</td></tr>';
   $("#nt").innerHTML=S.networks.map(function(n){return"<tr><td>"+esc(n.name)+" <small>("+esc(n.id)+")</small></td><td>"+esc(n.kind)+"</td><td>"+(n.postback_enabled?"включён":"выключен")+(n.has_secret?", секрет задан":"")+'</td><td><button class="b g" data-n="'+esc(n.id)+'" style="margin:0">Изменить</button></td></tr>'}).join("")||'<tr><td colspan="4" class="note">Сетей нет.</td></tr>';

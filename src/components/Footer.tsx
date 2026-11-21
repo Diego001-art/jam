@@ -1,4 +1,4 @@
-import { cities, cityPath, t, types } from "@/lib/content";
+import { cities, cityPath, t, typePath, types } from "@/lib/content";
 import { href } from "@/lib/paths";
 import { Logo } from "./Logo";
 import { disclosureText } from "./Disclosure";
@@ -11,7 +11,7 @@ export function Footer() {
           <div className="foot-brand"><Logo /><p data-t="footer.brand">{t("footer.brand")}</p></div>
           <div><h4>Продукты</h4><ul>
             {types.map((x) => (
-              <li key={x.id}><a href={href("/kredity/" + x.slug + "/")} data-type={x.id}>{x.name}</a></li>
+              <li key={x.id}><a href={href(typePath(x))} data-type={x.id}>{x.name}</a></li>
             ))}
           </ul></div>
           <div><h4>Города</h4><ul className="foot-cities">
@@ -24,6 +24,8 @@ export function Footer() {
             <li><a href={href("/kredity/")}>Каталог</a></li>
             <li><a href={href("/banki/")}>Банки</a></li>
             <li><a href={href("/kalkulyator/")}>Калькулятор</a></li>
+            <li><a href={href("/sravnenie/")}>Сравнение</a></li>
+            <li><a href={href("/voprosy/")}>Вопросы и ответы</a></li>
             <li><a href={href("/gid/")}>Гид</a></li>
             <li><a href={href("/o-proekte/")}>О проекте</a></li>
             <li><a href={href("/kontakty/")}>Контакты</a></li>

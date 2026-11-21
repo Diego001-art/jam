@@ -25,6 +25,8 @@ export const SiteSchema = z.object({
   geoLookup: z.boolean(),
   /** Адрес бэкенда /go/ (например https://go.example.ru). Пока null — кнопки ведут на официальные сайты. */
   goBaseUrl: url.nullable().default(null),
+  /** Номер счётчика Яндекс Метрики. Счётчик загружается только после согласия посетителя. */
+  metrikaId: z.number().int().positive().nullable().default(null),
   operator: z.object({
     type: z.enum(["ООО", "ИП", "АО", "ПАО", "самозанятый"]).nullable(),
     name: nullableStr,
@@ -208,6 +210,14 @@ export const AuthorsSchema = z.array(
 );
 
 export const TextsSchema = z.record(z.string());
+
+/** Вопросы и ответы: только о работе сервиса и общих понятиях, без обещаний и условий конкретных банков. */
+export const FaqSchema = z.array(z.object({
+  q: z.string().min(1),
+  a: z.string().min(1),
+  /** Виды продуктов, на страницах которых показывать вопрос; "*" — везде. */
+  types: z.array(z.string().min(1)).min(1),
+}));
 
 export type Site = z.infer<typeof SiteSchema>;
 export type ProductType = z.infer<typeof ProductTypeSchema>;

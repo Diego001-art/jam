@@ -5,7 +5,8 @@ import { Offers } from "@/components/Offers";
 import { CatalogData } from "@/components/Sections";
 import { Shell } from "@/components/Shell";
 import { defaultCity } from "@/components/Header";
-import { publishedProducts, site, types, visibleLenders } from "@/lib/content";
+import { bankTypePairs, bankTypePath, publishedProducts, site, types, visibleLenders } from "@/lib/content";
+import { href } from "@/lib/paths";
 import { lenderBlockers } from "@/lib/eligibility";
 import { dateRu } from "@/lib/format";
 import { pageMeta } from "@/lib/seo";
@@ -48,6 +49,7 @@ export default async function Lender({ params }: P) {
               <tr><th>Проверено</th><td>{l.checkedAt ? dateRu(l.checkedAt) + (l.approvedBy ? ", " + l.approvedBy : "") : "—"}</td></tr>
               <tr><th>Виды продуктов</th><td>{[...new Set(own.map((p) => types.find((t) => t.id === p.productType)!.name))].join(", ") || "—"}</td></tr>
             </tbody></table></div>
+            {bankTypePairs().some((x) => x.lender.id === l.id) ? (<><h3>Разделы по видам продуктов</h3><div className="link-chips">{bankTypePairs().filter((x) => x.lender.id === l.id).map((x) => <a key={x.type.id} className="chip" href={href(bankTypePath(x.type, x.lender))}>{x.type.name}</a>)}</div></>) : null}
             {l.sources.length ? (<><h3>Источники</h3><ul>{l.sources.map((s) => <li key={s.url}><a href={s.url} target="_blank" rel="noopener nofollow">{s.title}</a>, {dateRu(s.checkedAt)}</li>)}</ul></>) : null}
           </div>
         </section>

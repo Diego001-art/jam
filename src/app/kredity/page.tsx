@@ -4,7 +4,7 @@ import { Offers } from "@/components/Offers";
 import { CatalogData } from "@/components/Sections";
 import { Shell } from "@/components/Shell";
 import { defaultCity } from "@/components/Header";
-import { publishedProducts, types } from "@/lib/content";
+import { publishedProducts, typePath, types } from "@/lib/content";
 import { href } from "@/lib/paths";
 import { pageMeta } from "@/lib/seo";
 
@@ -17,7 +17,7 @@ export default function Catalog() {
       <PageHero crumbs={<Breadcrumbs items={[{ name: "Главная", path: "/" }, { name: "Кредиты", path: "/kredity/" }]} />} title="Каталог кредитных предложений"
         text="Условия публикуются только с первичным источником и датой проверки. Решение о кредите и итоговую ставку определяет банк.">
         <div className="hero-cta" data-hero>
-          {types.map((x) => <a key={x.id} className="pill pill-soft" href={href("/kredity/" + x.slug + "/")}>{x.name}</a>)}
+          {types.filter((x) => x.id !== "deposit").map((x) => <a key={x.id} className="pill pill-soft" href={href(typePath(x))}>{x.name}</a>)}
         </div>
       </PageHero>
       <main>

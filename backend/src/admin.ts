@@ -23,6 +23,10 @@ export function adminApi(db: Db, method: string, path: string, body: Body, q: UR
       networks: db.prepare("SELECT id,name,kind,website,status,notes,postback_enabled,postback_map, (postback_secret IS NOT NULL) AS has_secret FROM networks ORDER BY name").all(),
       programs: db.prepare("SELECT * FROM programs ORDER BY name").all(),
       offers: db.prepare("SELECT * FROM offers ORDER BY id").all(),
+      failedChecks: db.prepare(
+        `SELECT c.offer_id, c.target, c.http_status, c.note, c.ts FROM link_checks c
+          WHERE c.ok = 0 AND c.id = (SELECT MAX(id) FROM link_checks x WHERE x.offer_id = c.offer_id AND x.target = c.target)
+          ORDER BY c.ts DESC`).all(),
     });
   }
   if (method === "GET" && path === "/stats") {

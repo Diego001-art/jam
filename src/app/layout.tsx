@@ -27,10 +27,16 @@ export const viewport: Viewport = { width: "device-width", initialScale: 1, view
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="ru" data-base={BASE_PATH} data-geo={site.geoLookup ? "1" : "0"}>
+    <html lang="ru" data-base={BASE_PATH} data-geo={site.geoLookup ? "1" : "0"} data-metrika={site.metrikaId ?? undefined}>
       <body>
         {children}
         <Footer />
+        {site.metrikaId ? (
+          <div className="consent" id="consent" role="dialog" aria-label="Согласие на аналитику" hidden>
+            <p>Мы хотим использовать Яндекс Метрику, чтобы понимать, какие разделы полезны. Счётчик включится только с вашего согласия. <a href={asset("pravovaya-informatsiya/cookies/")}>Подробнее</a></p>
+            <div><button type="button" className="pill pill-ink" id="consentYes">Разрешить</button><button type="button" className="pill pill-line" id="consentNo">Отказаться</button></div>
+          </div>
+        ) : null}
         <JsonLd data={organizationLd()} />
         <SiteInit />
         <script defer src={asset("vendor/gsap.min.js")} />

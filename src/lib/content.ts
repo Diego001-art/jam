@@ -5,7 +5,7 @@ import fs from "node:fs";
 import path from "node:path";
 import vm from "node:vm";
 import {
-  AuthorsSchema, CitySchema, GuideSchema, LenderSchema, OfferSchema, ProductSchema, ProductTypeSchema, RegionsSchema, SiteSchema, TextsSchema,
+  AuthorsSchema, CitySchema, FaqSchema, GuideSchema, LenderSchema, OfferSchema, ProductSchema, ProductTypeSchema, RegionsSchema, SiteSchema, TextsSchema,
   type City, type Guide, type Lender, type Offer, type Product, type ProductType, type Region, type Site,
 } from "./schemas";
 import { availableIn, isLenderVisible, isProductPublishable, offerBlockers, today } from "./eligibility";
@@ -51,6 +51,19 @@ export const lenderOf = (id: string) => lenders.find((l) => l.id === id);
 export const visibleLenders = lenders.filter((l) => isLenderVisible(l, site));
 export const publishedProducts = products.filter((p) => isProductPublishable(p, lenderOf(p.lenderId)));
 export const typeById = (id: string) => types.find((x) => x.id === id)!;
+/** Адрес раздела вида продукта: вклады — отдельный раздел /vklady/, остальное — /kredity/{вид}/. */
+export const typePath = (t: Pick<ProductType, "id" | "slug">) => (t.id === "deposit" ? "/vklady/" : "/kredity/" + t.slug + "/");
+export const bankTypePath = (t: Pick<ProductType, "id" | "slug">, l: Pick<Lender, "slug">) => typePath(t) + l.slug + "/";
+/** Пары «вид + банк», для которых в данных есть хотя бы один продукт. Пустых страниц не создаём. */
+export function bankTypePairs() {
+  const out: { type: ProductType; lender: Lender; published: number }[] = [];
+  types.forEach((t) => visibleLenders.forEach((l) => {
+    if (!products.some((p) => p.lenderId === l.id && p.productType === t.id && p.status !== "archived")) return;
+    out.push({ type: t, lender: l, published: publishedProducts.filter((p) => p.lenderId === l.id && p.productType === t.id).length });
+  }));
+  return out;
+}
+export const faq = load("content/faq.json", FaqSchema);
 
 export function offersInCity(c: City, type?: string) {
   const r = regionOf(c), d = r.districtId;

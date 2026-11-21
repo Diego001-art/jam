@@ -5,6 +5,7 @@
   "indexing": false,
   "geoLookup": false,
   "goBaseUrl": null,
+  "metrikaId": null,
   "operator": {
     "type": null,
     "name": null,

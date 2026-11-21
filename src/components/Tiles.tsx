@@ -1,4 +1,4 @@
-import { t, types } from "@/lib/content";
+import { t, typePath, types } from "@/lib/content";
 import { asset, href } from "@/lib/paths";
 
 const ORDER = ["cash", "card", "mortgage", "auto", "refi", "debit", "pledge"];
@@ -12,7 +12,7 @@ export function Tiles() {
           const ty = types.find((x) => x.id === id)!;
           const big = id === "cash";
           return (
-            <a key={id} href={href("/kredity/" + ty.slug + "/")} className={"tile" + (big ? " big" : "")} data-type={id}>
+            <a key={id} href={href(typePath(ty))} className={"tile" + (big ? " big" : "")} data-type={id}>
               {big ? (
                 <div><div className="t" data-t={"tiles." + id + ".t"}>{t("tiles." + id + ".t")}</div><div className="s" data-t={"tiles." + id + ".s"}>{t("tiles." + id + ".s")}</div></div>
               ) : (

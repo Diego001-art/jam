@@ -276,6 +276,30 @@
       drawCmp(); window.addEventListener("hashchange", drawCmp);
     }
 
+    /* ── Яндекс Метрика: только после явного согласия ── */
+    var MID = Number(document.documentElement.getAttribute("data-metrika")) || 0;
+    function loadMetrika() {
+      if (!MID || window.ym) return;
+      (function (m, e, t, r, i, k, a) { m[i] = m[i] || function () { (m[i].a = m[i].a || []).push(arguments); }; m[i].l = 1 * new Date(); k = e.createElement(t); a = e.getElementsByTagName(t)[0]; k.async = 1; k.src = r; a.parentNode.insertBefore(k, a); })(window, document, "script", "https://mc.yandex.ru/metrika/tag.js", "ym");
+      window.ym(MID, "init", { clickmap: true, trackLinks: true, accurateTrackBounce: true, webvisor: false });
+    }
+    if (MID) {
+      var choice = null; try { choice = localStorage.getItem("consent"); } catch (e) {}
+      var box = $("#consent");
+      if (choice === "yes") loadMetrika();
+      else if (choice !== "no" && box) box.hidden = false;
+      var setChoice = function (v) { try { localStorage.setItem("consent", v); } catch (e) {} if (box) box.hidden = true; if (v === "yes") loadMetrika(); };
+      if (box) { $("#consentYes").addEventListener("click", function () { setChoice("yes"); }); $("#consentNo").addEventListener("click", function () { setChoice("no"); }); }
+      var reset = $("#consentReset");
+      if (reset) reset.addEventListener("click", function () { try { localStorage.removeItem("consent"); } catch (e) {} location.reload(); });
+      // Цель «переход на сайт банка» — для CTR кнопок в отчётах Метрики.
+      document.addEventListener("click", function (e) {
+        var a = e.target.closest && e.target.closest(".oc-go"); if (!a || !window.ym) return;
+        var card = a.closest("[data-offer]");
+        window.ym(MID, "reachGoal", "bank_click", { offer: card ? card.getAttribute("data-offer") : null, partner: a.hasAttribute("data-go") });
+      });
+    }
+
     /* ── Анимации ── */
     if (window.gsap && window.ScrollTrigger && !reduce) {
       gsap.registerPlugin(ScrollTrigger);

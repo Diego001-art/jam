@@ -46,6 +46,15 @@ CREATE TABLE IF NOT EXISTS clicks (
   source_path TEXT,
   utm_source TEXT, utm_medium TEXT, utm_campaign TEXT
 );
+CREATE TABLE IF NOT EXISTS link_checks (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  offer_id TEXT NOT NULL,
+  ts TEXT NOT NULL DEFAULT (datetime('now')),
+  target TEXT NOT NULL CHECK (target IN ('tracking','fallback')),
+  ok INTEGER NOT NULL,
+  http_status INTEGER,
+  note TEXT
+);
 CREATE INDEX IF NOT EXISTS clicks_offer_ts ON clicks(offer_id, ts);
 CREATE TABLE IF NOT EXISTS conversions (
   id INTEGER PRIMARY KEY AUTOINCREMENT,

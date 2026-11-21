@@ -1,9 +1,9 @@
-import { cities, t, types } from "@/lib/content";
+import { cities, t, typeById, typePath as tp } from "@/lib/content";
 import { asset, href } from "@/lib/paths";
 import { SiteLogo } from "./Logo";
 
-const NAV: [string, string][] = [["cash", "Кредиты"], ["card", "Карты"], ["mortgage", "Ипотека"], ["auto", "Автокредиты"]];
-const typePath = (id: string) => href("/kredity/" + types.find((x) => x.id === id)!.slug + "/");
+const NAV: [string, string][] = [["cash", "Кредиты"], ["card", "Карты"], ["mortgage", "Ипотека"], ["auto", "Автокредиты"], ["deposit", "Вклады"]];
+const typePath = (id: string) => href(tp(typeById(id)));
 
 /** Город в шапке до работы скрипта — Москва либо город страницы. */
 export function Header({ cityName }: { cityName: string }) {

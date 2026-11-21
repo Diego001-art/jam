@@ -3,6 +3,9 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+  # Ежедневная пересборка: продукты с истёкшим сроком актуальности скрываются без ручных действий.
+  schedule:
+    - cron: "17 3 * * *"
 permissions:
   contents: read
   pages: write

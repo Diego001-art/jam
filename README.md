@@ -37,4 +37,10 @@ Node.js 22 LTS. Префикс адресов задаёт `NEXT_PUBLIC_BASE_PAT
 
 ## Адреса
 
-`/`, `/kredity/`, `/kredity/{вид}/`, `/banki/`, `/banki/{slug}/`, `/goroda/`, `/goroda/{регион}/`, `/goroda/{регион}/{город}/`, `/gid/`, `/gid/{slug}/`, `/kalkulyator/`, `/o-proekte/`, `/kontakty/`, `/pravovaya-informatsiya/` (+ `privacy`, `consent`, `cookies`). Старые адреса `/kazan/` ведут на новые.
+`/`, `/kredity/`, `/kredity/{вид}/`, `/kredity/{вид}/{банк}/`, `/vklady/`, `/vklady/{банк}/`, `/sravnenie/`, `/voprosy/`, `/banki/`, `/banki/{slug}/`, `/goroda/`, `/goroda/{регион}/`, `/goroda/{регион}/{город}/`, `/gid/`, `/gid/{slug}/`, `/kalkulyator/`, `/o-proekte/`, `/kontakty/`, `/pravovaya-informatsiya/` (+ `soglashenie`, `privacy`, `consent`, `cookies`). Старые адреса `/kazan/` ведут на новые.
+
+Страница «вид + банк» создаётся только если у банка есть продукт этого вида в данных, и индексируется только при опубликованном продукте и проверенном банке.
+
+## Бэкенд (партнёрские ссылки)
+
+`backend/` — переходы `/go/{id}`, postback, админка ссылок и статистики, проверка ссылок. Команды: `npm run backend`, `npm run backend:hash -- "пароль"`, `npm run backend:check` (по расписанию на сервере). Подробно: `docs/decisions/0004-backend.md`, `backend/NETWORKS.md`.

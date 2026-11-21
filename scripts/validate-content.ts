@@ -27,7 +27,7 @@ unique("гид.slug", guides.map((g) => g.slug));
 unique("виды.slug", types.map((t) => t.slug));
 
 // Корневые адреса, которые не должны совпадать с id городов (старые редиректы /kazan/)
-const reserved = new Set(["kredity", "banki", "goroda", "gid", "kalkulyator", "o-proekte", "kontakty", "pravovaya-informatsiya", "admin", "img", "js", "vendor"]);
+const reserved = new Set(["kredity", "banki", "goroda", "gid", "kalkulyator", "vklady", "sravnenie", "voprosy", "o-proekte", "kontakty", "pravovaya-informatsiya", "admin", "img", "js", "vendor"]);
 cities.forEach((c) => { if (reserved.has(c.id)) err(`город ${c.id}: id совпадает с разделом сайта`); });
 
 const regionIds = new Set(regions.map((r) => r.id));
@@ -58,7 +58,8 @@ products.forEach((p) => {
   if (p.rateMin != null && p.rateMax != null && p.rateMin > p.rateMax) err(`продукт ${p.id}: ставка от > до`);
   if (p.pskMin != null && p.pskMax != null && p.pskMin > p.pskMax) err(`продукт ${p.id}: ПСК от > до`);
   if (p.status === "published") {
-    const b = productBlockers(p, l, now);
+    // Истёкший срок не ломает сборку: продукт просто скрывается (предупреждение ниже).
+    const b = productBlockers(p, l, now).filter((x) => x !== "истёк срок актуальности");
     if (b.length) err(`продукт ${p.id} опубликован, но: ${b.join("; ")}`);
   }
 });
@@ -92,6 +93,12 @@ if (site.indexing) {
   if (site.mode !== "production") err("индексация включена в режиме preview");
 }
 if (site.commercial.affiliateLinks && !site.commercial.disclosure) err("включены партнёрские ссылки без текста раскрытия");
+
+const soon = new Date(Date.now() + 14 * 864e5).toISOString().slice(0, 10);
+products.forEach((p) => {
+  if (p.status === "published" && p.validUntil && p.validUntil >= now && p.validUntil <= soon) warns.push(`продукт ${p.id}: срок актуальности истекает ${p.validUntil} — перепроверьте условия`);
+  if (p.status === "published" && p.validUntil && p.validUntil < now) warns.push(`продукт ${p.id}: срок актуальности истёк ${p.validUntil}, на сайте скрыт`);
+});
 
 const count = (s: string) => products.filter((p) => p.status === s).length;
 warns.push(`продукты: опубликовано ${count("published")}, черновиков ${count("draft")}, на проверке ${count("review")}`);
