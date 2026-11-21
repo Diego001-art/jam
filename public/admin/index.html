@@ -147,6 +147,7 @@ a{color:var(--plum)}
     <nav class="tabs" id="tabs">
       <button class="on" data-p="pPage">Тексты и фото</button>
       <button data-p="pBanks">Банки и продукты</button>
+      <button data-p="pOffers">Партнёрские офферы</button>
       <button data-p="pRegions">Регионы</button>
       <button data-p="pCities">Города</button>
       <button data-p="pSettings">Настройки</button>
@@ -175,6 +176,15 @@ a{color:var(--plum)}
       <div class="split">
         <div><div class="list" id="bankList"></div><button class="pill" id="bAddBank" style="margin-top:10px;width:100%">+ Банк</button></div>
         <div id="bankEdit"><div class="box"><p class="sub" style="margin:0">Выберите банк слева.</p></div></div>
+      </div>
+    </div></div>
+
+    <div class="pane" id="pOffers"><div class="wrap">
+      <h2>Партнёрские офферы</h2>
+      <p class="sub">Публичная часть оффера: рекламодатель, ERID и раскрытие. Ссылки, вознаграждение и выплаты здесь не хранятся: репозиторий публичный, они в админке бэкенда. Id оффера должен совпадать с id в бэкенде.</p>
+      <div class="split">
+        <div><div class="list" id="offList"></div><button class="pill" id="bAddOffer" style="margin-top:10px;width:100%">+ Оффер</button></div>
+        <div id="offEdit"><div class="box"><p class="sub" style="margin:0">Выберите оффер слева или добавьте новый.</p></div></div>
       </div>
     </div></div>
 
@@ -219,7 +229,7 @@ var OWNER = "Diego001-art", REPO = "jam", BRANCH = "main";
 var API = "https://api.github.com/repos/" + OWNER + "/" + REPO;
 var SITE = new URL("../", location.href).href.replace(/\/$/, "");
 var VAULT = "public/admin/vault.json", ITER = 600000;
-var FILES = { site: "data/site.json", lenders: "data/lenders.json", products: "data/products.json", regions: "data/regions.json", cities: "data/cities.json", types: "data/product-types.json", texts: "content/texts.json" };
+var FILES = { site: "data/site.json", lenders: "data/lenders.json", products: "data/products.json", regions: "data/regions.json", cities: "data/cities.json", offers: "data/offers.json", types: "data/product-types.json", texts: "content/texts.json" };
 
 var $ = function (s, r) { return (r || document).querySelector(s); }, $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
 var esc = function (t) { return String(t == null ? "" : t).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); };
@@ -381,8 +391,16 @@ function validate() {
   seen = {};
   D.lenders.forEach(function (l) { if (seen[l.id]) e.push("Повтор id банка: " + l.id); seen[l.id] = 1; if (l.status === "published") { var b = lenderBlockers(l); if (b.length) e.push("Банк «" + l.name + "»: " + b.join(", ")); } });
   D.cities.forEach(function (c) { if (c.indexable) { var b = cityBlockers(c); if (b.length) e.push("Город " + c.name + " отмечен для индексации, но: " + b.join(", ")); } });
+  seen = {};
+  D.offers.forEach(function (of) {
+    if (seen[of.id]) e.push("Повтор id оффера: " + of.id); seen[of.id] = 1;
+    if (!productById(of.productId)) e.push("Оффер " + of.id + ": нет продукта " + of.productId);
+    if (of.status === "published") { var b = offerBlockers(of); if (b.length) e.push("Оффер " + of.id + ": " + b.join(", ")); }
+  });
+  var pubPer = {};
+  D.offers.forEach(function (of) { if (of.status === "published") { pubPer[of.productId] = (pubPer[of.productId] || 0) + 1; if (pubPer[of.productId] === 2) e.push("Продукт " + of.productId + ": опубликовано несколько офферов, допустим один"); } });
   var o = D.site.operator;
-  if (D.site.indexing && (!o.name || !o.inn || !o.ogrn || !o.email)) e.push("Индексация включена, но не заполнены реквизиты оператора");
+  if (D.site.indexing && (!o.name || !o.inn || (o.type !== "самозанятый" && !o.ogrn) || !o.email)) e.push("Индексация включена, но не заполнены реквизиты оператора");
   if (D.site.indexing && D.site.mode !== "production") e.push("Индексация включена в режиме «Предпросмотр»");
   if (D.site.commercial.affiliateLinks && !D.site.commercial.disclosure) e.push("Включены партнёрские ссылки без текста раскрытия");
   return e;
@@ -399,7 +417,7 @@ async function enterApp() {
   try { await loadAll(); } catch (x) { $("#status").textContent = "Ошибка: " + x.message; return; }
   renderAll(); refresh();
 }
-function renderAll() { buildFrame(); renderBanks(); renderTree(); renderCities(); renderSettings(); }
+function renderAll() { buildFrame(); renderBanks(); renderOffersTab(); renderTree(); renderCities(); renderSettings(); }
 $("#bReset").addEventListener("click", function () {
   if (!confirm("Отменить все неопубликованные изменения?")) return;
   Object.keys(FILES).forEach(function (k) { D[k] = JSON.parse(ORIG[k]); }); IMG = {}; CUR_B = null; CUR_P = null; RG = null; renderAll(); refresh();
@@ -648,6 +666,53 @@ function renderProduct() {
   $("#pDel").addEventListener("click", function () { if (!confirm("Удалить продукт «" + p.productName + "»?")) return; D.products.splice(D.products.indexOf(p), 1); CUR_P = null; refresh(); renderBanks(); });
 }
 
+/* ── партнёрские офферы (публичная часть) ── */
+var CUR_O = null;
+var OSTATUS = [["draft", "Черновик"], ["published", "Опубликован"], ["archived", "Архив"]];
+function productById(id) { return D.products.filter(function (x) { return x.id === id; })[0]; }
+function productLabel(id) { var p = productById(id); if (!p) return id; var l = lenderById(p.lenderId); return (l ? l.name + " — " : "") + p.productName; }
+function offerBlockers(o) {
+  var p = productById(o.productId), r = [];
+  if (o.status !== "published") r.push("статус не «Опубликован»");
+  if (!p) r.push("продукт не найден");
+  else r = r.concat(productBlockers(p).filter(function (b) { return b !== "партнёрская ссылка без раскрытия"; }));
+  if (!o.disclosure) r.push("нет раскрытия партнёрского характера ссылки");
+  if (!o.advertiser) r.push("не указан рекламодатель для маркировки");
+  if (!o.approvedBy) r.push("не указано, кто подтвердил");
+  return r;
+}
+function renderOffersTab() {
+  var box = $("#offList"); box.innerHTML = "";
+  D.offers.forEach(function (o) {
+    var b = document.createElement("button"); b.type = "button"; b.className = "li" + (CUR_O === o.id ? " on" : "");
+    b.innerHTML = '<span style="flex:1"><b>' + esc(o.id) + "</b><small>" + esc(productLabel(o.productId)) + "</small></span>" + badge(o.status);
+    b.addEventListener("click", function () { CUR_O = o.id; renderOffersTab(); });
+    box.appendChild(b);
+  });
+  var o = D.offers.filter(function (x) { return x.id === CUR_O; })[0], ed = $("#offEdit");
+  if (!o) { ed.innerHTML = '<div class="box"><p class="sub" style="margin:0">Выберите оффер слева или добавьте новый.</p></div>'; return; }
+  ed.innerHTML = '<div class="box"><h3>' + esc(o.id) + '</h3><div id="oGate"></div>' +
+    fld("Продукт", sel("productId", o.productId, D.products.map(function (p) { return [p.id, productLabel(p.id)]; }))) +
+    '<div class="row2">' + fld("Статус", sel("status", o.status, OSTATUS)) + fld("Кто подтвердил", inp("approvedBy", o.approvedBy)) + "</div>" +
+    fld("Рекламодатель (для маркировки)", inp("advertiser", o.advertiser), "Наименование и ИНН рекламодателя из договора или кабинета сети") +
+    fld("ERID", inp("erid", o.erid), "Токен маркировки, если он нужен и получен через ОРД. Не придумывать") +
+    fld("Раскрытие партнёрского характера ссылки", '<textarea data-k="disclosure" rows="2">' + esc(o.disclosure || "") + "</textarea>") +
+    '<div style="margin-top:14px"><button type="button" class="pill danger" id="oDel">Удалить оффер</button></div></div>';
+  function gate() { $("#oGate").innerHTML = gateBox(offerBlockers(o)); }
+  gate();
+  bind(ed, o, function () { gate(); });
+  $("#oDel").addEventListener("click", function () { if (!confirm("Удалить оффер «" + o.id + "»?")) return; D.offers.splice(D.offers.indexOf(o), 1); CUR_O = null; refresh(); renderOffersTab(); });
+}
+$("#bAddOffer").addEventListener("click", function () {
+  var base = D.products.length ? D.products[0].id : "offer", id = prompt("Id оффера (латиница, цифры, дефис; как в бэкенде)", base + "-go");
+  if (!id) return; id = id.trim().toLowerCase();
+  if (!/^[a-z0-9-]+$/.test(id)) { toast("Id: только латиница, цифры и дефис"); return; }
+  if (D.offers.some(function (x) { return x.id === id; })) { toast("Такой id уже есть"); return; }
+  if (!D.products.length) { toast("Сначала добавьте продукт"); return; }
+  D.offers.push({ id: id, productId: D.products[0].id, status: "draft", advertiser: null, erid: null, disclosure: null, approvedBy: null });
+  CUR_O = id; refresh(); renderOffersTab();
+});
+
 /* ── регионы: массовое скрытие ── */
 var RG = null; // {level:'districts'|'regions'|'cities', id}
 function renderTree() {
@@ -712,12 +777,12 @@ function renderCities() {
 function renderSettings() {
   var s = D.site, o = s.operator, box = $("#setBox");
   box.innerHTML = "<h2>Настройки</h2><p class=\"sub\">Реквизиты оператора выводятся в раскрытиях на всех страницах. Пустые поля показываются как «будет указано».</p>" +
-    '<div class="box"><h3>Оператор сайта</h3><div class="row3">' + fld("Форма", sel("type", o.type || "", [["", "—"], ["ООО", "ООО"], ["ИП", "ИП"], ["АО", "АО"], ["ПАО", "ПАО"]])) + fld("Наименование / ФИО", inp("name", o.name)) + fld("ИНН", inp("inn", o.inn)) + "</div>" +
-    '<div class="row3">' + fld("ОГРН / ОГРНИП", inp("ogrn", o.ogrn)) + fld("E-mail", inp("email", o.email, "email")) + fld("Телефон", inp("phone", o.phone)) + "</div>" +
+    '<div class="box"><h3>Оператор сайта</h3><div class="row3">' + fld("Форма", sel("type", o.type || "", [["", "—"], ["ООО", "ООО"], ["ИП", "ИП"], ["АО", "АО"], ["ПАО", "ПАО"], ["самозанятый", "Самозанятый"]])) + fld("Наименование / ФИО", inp("name", o.name)) + fld("ИНН", inp("inn", o.inn)) + "</div>" +
+    '<div class="row3">' + fld("ОГРН / ОГРНИП (самозанятому не нужен)", inp("ogrn", o.ogrn)) + fld("E-mail", inp("email", o.email, "email")) + fld("Телефон", inp("phone", o.phone)) + "</div>" +
     fld("Адрес", inp("address", o.address)) + '<div class="row2">' + fld("Ответственный за персональные данные", inp("pdResponsible", o.pdResponsible)) + fld("E-mail для обращений по ПДн", inp("pdEmail", o.pdEmail, "email")) + "</div></div>" +
     '<div class="box"><h3>Коммерческая модель</h3>' + fld("Как зарабатывает сайт", '<textarea data-k="model" rows="2">' + esc(s.commercial.model || "") + "</textarea>") +
     '<label class="chk"><input type="checkbox" data-k="affiliateLinks"' + (s.commercial.affiliateLinks ? " checked" : "") + "> На сайте есть партнёрские ссылки</label>" + fld("Текст раскрытия", '<textarea data-k="disclosure" rows="2">' + esc(s.commercial.disclosure || "") + "</textarea>") + "</div>" +
-    '<div class="box"><h3>Сайт</h3>' + fld("Условия проверены (общая дата в раскрытии)", inp("conditionsCheckedAt", s.conditionsCheckedAt, "date")) +
+    '<div class="box"><h3>Сайт</h3>' + fld("Адрес бэкенда /go/ (пусто — кнопки ведут на сайты банков)", inp("goBaseUrl", s.goBaseUrl, "url"), "Например https://go.ваш-домен.ru, только https") + fld("Условия проверены (общая дата в раскрытии)", inp("conditionsCheckedAt", s.conditionsCheckedAt, "date")) +
     '<label class="chk"><input type="checkbox" data-k="geoLookup"' + (s.geoLookup ? " checked" : "") + "> Определять город по IP (ipapi.co, ipwho.is — требует правовой оценки)</label>" +
     fld("Режим", sel("mode", s.mode, [["preview", "Предпросмотр — видны непроверенные банки"], ["production", "Боевой — только проверенное"]])) +
     '<label class="chk"><input type="checkbox" data-k="indexing"' + (s.indexing ? " checked" : "") + "> Открыть сайт для поисковиков</label><small class=\"sub\">Включать только после заполнения реквизитов, юридической проверки и перехода на боевой режим. Публикация не пройдёт, если условия не выполнены.</small></div>";

@@ -5,7 +5,7 @@ import { dateRu } from "@/lib/format";
 export function operatorLine() {
   const o = site.operator;
   if (!o.name) return "Сайт [оператор и реквизиты будут указаны]";
-  const ids = [o.inn ? "ИНН " + o.inn : null, o.ogrn ? (o.type === "ИП" ? "ОГРНИП " : "ОГРН ") + o.ogrn : null].filter(Boolean).join(", ");
+  const ids = [o.inn ? "ИНН " + o.inn : null, o.ogrn && o.type !== "самозанятый" ? (o.type === "ИП" ? "ОГРНИП " : "ОГРН ") + o.ogrn : null].filter(Boolean).join(", ");
   return "Сайт " + [o.type, o.name].filter(Boolean).join(" ") + (ids ? ", " + ids : "");
 }
 

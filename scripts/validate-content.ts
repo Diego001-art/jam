@@ -88,7 +88,7 @@ guides.forEach((g) => {
 
 if (site.indexing) {
   const o = site.operator;
-  if (!o.name || !o.inn || !o.ogrn || !o.email) err("индексация включена, но реквизиты оператора не заполнены (ТЗ, раздел 6)");
+  if (!o.name || !o.inn || (o.type !== "самозанятый" && !o.ogrn) || !o.email) err("индексация включена, но реквизиты оператора не заполнены (ТЗ, раздел 6)");
   if (site.mode !== "production") err("индексация включена в режиме preview");
 }
 if (site.commercial.affiliateLinks && !site.commercial.disclosure) err("включены партнёрские ссылки без текста раскрытия");
