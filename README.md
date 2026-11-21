@@ -1,18 +1,18 @@
 # Сайт подбора кредитных предложений
 
-Статический сайт на Next.js (App Router, TypeScript strict, Zod). Каждая страница собирается в готовый HTML — основной текст доступен роботу без выполнения скриптов. Хостинг на этапе подготовки — GitHub Pages (`https://diego001-art.github.io/banki/`), сайт закрыт от индексации до запуска.
+Статический сайт на Next.js (App Router, TypeScript strict, Zod). Каждая страница собирается в готовый HTML — основной текст доступен роботу без выполнения скриптов. Хостинг на этапе подготовки — GitHub Pages (`https://diego001-art.github.io/jam/`), сайт закрыт от индексации до запуска.
 
 ## Установка и команды
 
 ```bash
 npm ci
-npm run dev        # http://localhost:3000/banki/
+npm run dev        # http://localhost:3000/jam/
 npm run validate   # проверка данных
 npm test           # тесты
 npm run build      # сборка в out/ и SEO-проверка
 ```
 
-Node.js 22 LTS. Префикс адресов задаёт `NEXT_PUBLIC_BASE_PATH` (по умолчанию `/banki`; для собственного домена — пусто).
+Node.js 22 LTS. Префикс адресов задаёт `NEXT_PUBLIC_BASE_PATH` (по умолчанию `/jam`; для собственного домена — пусто).
 
 ## Где что лежит
 

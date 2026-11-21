@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 /** Статическая сборка: каждая страница — готовый HTML (ТЗ, раздел 8). */
-const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "/banki";
+const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "/jam";
 
 const config: NextConfig = {
   output: "export",
